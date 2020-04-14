@@ -173,6 +173,11 @@ class Person:
 		pygame.draw.rect(screen, self.team, pygame.Rect(self.body.position.x, self.body.position.y, self.size, self.size))
 		pygame.draw.rect(screen, self.color, pygame.Rect(self.body.position.x, self.body.position.y, self.size, self.size//2))
 
+		hp = self.hp/100*self.size
+		pygame.draw.rect(screen, (255,0,0), pygame.Rect(self.body.position.x+hp, self.body.position.y - 2, self.size-hp, 1))
+		pygame.draw.rect(screen, (0,255,0), pygame.Rect(self.body.position.x, self.body.position.y - 2, hp, 1))
+
+
 	def settask(self, task):
 		self.cpu.pointer = 0
 		self.cpu.task = task
