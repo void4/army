@@ -8,7 +8,7 @@ from world import *
 pygame.init()
 pygame.display.set_caption("army")
 
-screen = pygame.display.set_mode((640,480))
+screen = pygame.display.set_mode((1920,1080))
 
 color = (255, 255, 255)
 
@@ -30,7 +30,7 @@ while running:
 
 	for obj in killlist:
 		world.remove(obj)
-		
+
 	print(len(world))
 
 	i += 1

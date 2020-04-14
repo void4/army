@@ -1,6 +1,7 @@
 import pygame
 import pymunk
-from pymunk import Space, Body, Poly, Vec2d
+from pymunk import Space, Body, Poly, Vec2d, ShapeFilter
+from random import random, randint, choice
 
 space = Space()
 space.gravity = 0,0
@@ -24,8 +25,8 @@ task_soldier = "'(0,100,0) color 20 follow".split()
 task_teamleader = "'(0,150,0) color 5 'soldier recruit 20 follow".split()
 task_groupleader = "'(0,200,0) color 3 'teamleader recruit 15 follow".split()
 task_platoonleader = "'(0,150,150) color 4 'groupleader recruit 10 follow".split()
-task_companyleader = "'(0,200,200) color 3 'platoonleader recruit 10 follow".split()
-task_battalionleader = "'(150,0,0) color 3 'companyleader recruit 10  300 300 move".split()
+task_companyleader = "'(0,200,200) color 3 'platoonleader recruit 10 300 300 move".split()
+#task_battalionleader = "'(150,0,0) color 3 'companyleader recruit 300 300 move".split()
 #task_brigadeleader = "'(200,0,0) color 3 'battalionleader recruit 300 300 move".split()
 
 def is_number(s):
@@ -90,8 +91,31 @@ class Shout:
 	def draw(self, screen):
 		pygame.draw.circle(screen, (50,50,50), (int(self.x), int(self.y)), self.t, min(self.t, 1))
 
+class Bullet:
+	def __init__(self, x, y, tx, ty):
+		self.sx = x
+		self.sy = y
+		self.x = x
+		self.y = y
+		self.tx = tx
+		self.ty = ty
+		self.t = 0
+
+	def update(self):
+		self.x += (self.tx-self.sx)/100
+		self.y += (self.ty-self.sy)/100
+		if self.t == 100:
+			hit = space.point_query_nearest((self.x, self.y), 10, ShapeFilter())
+			if hit and hit.shape is not None:
+				hit.shape._o.hp -= 100
+			return True
+		self.t += 1
+
+	def draw(self, screen):
+		pygame.draw.circle(screen, (10,10,10), (int(self.x), int(self.y)), 1)
+
 class Person:
-	def __init__(self, x, y, superior=None, task=None):
+	def __init__(self, x, y, superior=None, task=None, team=(0,0,0)):
 		self.hp = 100
 		self.activity = None
 		self.adata = None
@@ -100,15 +124,21 @@ class Person:
 		self.hand = []
 		self.cpu = Interpreter(task)
 		self.superior = superior
+		self.team = team
+
+		self.size = 10
 
 		global space
 		self.body = Body(1,100)
+		poly = Poly.create_box(self.body, (self.size, self.size))
+		poly._o = self
 		self.body.position = x,y
 		self.color = (0,0,0)
-		space.add(self.body, Poly.create_box(self.body, (5,5)))
+		space.add(self.body, poly)
 
 	def draw(self, screen):
-		pygame.draw.rect(screen, self.color, pygame.Rect(self.body.position.x, self.body.position.y, 5, 5))
+		pygame.draw.rect(screen, self.team, pygame.Rect(self.body.position.x, self.body.position.y, self.size, self.size))
+		pygame.draw.rect(screen, self.color, pygame.Rect(self.body.position.x, self.body.position.y, self.size, self.size//2))
 
 	def settask(self, task):
 		self.cpu.pointer = 0
@@ -144,10 +174,17 @@ class Person:
 		if step:
 			self.activity, self.adata = self.cpu.step()
 
+		if random() < 0.01:
+			target = choice([o for o in world if isinstance(o, Person)])
+			world.append(Bullet(self.body.position.x, self.body.position.y, target.body.position.x, target.body.position.y))
+
+		if self.hp <= 0:
+			return True
+
 	def recruit(self):
 		global world
 		for i in range(self.adata[0]):
-			world.append(Person(self.body.position.x-16*i, self.body.position.y-10*i, superior=self, task=eval("task_"+self.adata[1])))
+			world.append(Person(self.body.position.x-16*i, self.body.position.y-10*i, superior=self, task=eval("task_"+self.adata[1]), team=self.team))
 
 	def step(self, tick):
 		pass
