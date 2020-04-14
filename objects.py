@@ -114,6 +114,39 @@ class Bullet:
 	def draw(self, screen):
 		pygame.draw.circle(screen, (10,10,10), (int(self.x), int(self.y)), 1)
 
+class Grenade:
+	def __init__(self, x, y, tx, ty):
+		self.sx = x
+		self.sy = y
+		self.x = x
+		self.y = y
+		self.tx = tx
+		self.ty = ty
+		self.t = 0
+
+	def update(self):
+		self.x += (self.tx-self.sx)/100
+		self.y += (self.ty-self.sy)/100
+		if self.t == 100:
+			hits = space.point_query((self.x, self.y), 10, ShapeFilter())
+			for hit in hits:
+				if hit.shape is not None:
+					print(hit.distance)
+					dist = abs(hit.distance)
+					hit.shape._o.hp -= (10-dist)*15
+
+		self.t += 1
+
+		if self.t >= 110:
+			return True
+
+	def draw(self, screen):
+		if self.t < 100:
+			pygame.draw.circle(screen, (10,10,10), (int(self.x), int(self.y)), 1)
+		else:
+			pygame.draw.circle(screen, (250,110,110), (int(self.x), int(self.y)), self.t-100)
+
+
 class Person:
 	def __init__(self, x, y, superior=None, task=None, team=(0,0,0)):
 		self.hp = 100
@@ -177,6 +210,11 @@ class Person:
 		if random() < 0.01:
 			target = choice([o for o in world if isinstance(o, Person)])
 			world.append(Bullet(self.body.position.x, self.body.position.y, target.body.position.x, target.body.position.y))
+
+		if random() < 0.01:
+			target = choice([o for o in world if isinstance(o, Person)])
+			world.append(Grenade(self.body.position.x, self.body.position.y, target.body.position.x, target.body.position.y))
+
 
 		if self.hp <= 0:
 			return True
