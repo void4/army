@@ -16,6 +16,13 @@ delta = 0.05
 
 i = 0
 running = True
+
+sel_start = None
+sel_intermediate = None
+sel_end = None
+# TODO weakmap, in case object is removed
+selected = []
+
 while running:
 	screen.fill(color)
 
@@ -28,19 +35,58 @@ while running:
 			killlist.append(obj)
 		obj.draw(screen)
 
+	if sel_start and sel_intermediate:
+		x1 = min(sel_start[0], sel_intermediate[0])
+		x2 = max(sel_start[0], sel_intermediate[0])
+		y1 = min(sel_start[1], sel_intermediate[1])
+		y2 = max(sel_start[1], sel_intermediate[1])
+		pygame.draw.rect(screen, (0, 100, 255), (x1, y1, x2-x1, y2-y1), 2)
+
 	for obj in killlist:
 		world.remove(obj)
 
-	print(len(world))
+	#TODO print(len(world))
 
 	i += 1
 
-	for event in pygame.event.get():
+	if sel_start:
+		sel_intermediate = pygame.mouse.get_pos()
 
-		if event.type == pygame.MOUSEBUTTONUP:
+	for event in pygame.event.get():
+		if event.type == pygame.MOUSEBUTTONDOWN:
+			sel_start = pygame.mouse.get_pos()
+		elif event.type == pygame.MOUSEBUTTONUP:
 			pos = pygame.mouse.get_pos()
-			print(pos)
-			world[0].settask(f"{pos[0]} {pos[1]} move".split())
+
+			if pos == sel_start:
+				for selection in selected:
+					selection.settask(f"{pos[0]} {pos[1]} 200 move".split())
+				print("moved")
+
+			else:
+				sel_end = pos
+
+				x1 = min(sel_start[0], sel_end[0])
+				x2 = max(sel_start[0], sel_end[0])
+				y1 = min(sel_start[1], sel_end[1])
+				y2 = max(sel_start[1], sel_end[1])
+
+				selected = []
+
+				for obj in world:
+					if not isinstance(obj, Person):
+						continue
+
+					ox, oy = obj.body.position
+					if x1 <= ox <= x2 and y1 <= oy <= y2:
+						selected.append(obj)
+
+
+				print("slected", selected)
+
+			sel_start = None
+			sel_intermediate = None
+			sel_end = None
 
 		elif event.type == pygame.QUIT:
 			running = False

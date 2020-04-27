@@ -19,14 +19,14 @@ def gel(a,b):
 	else:
 		return 0
 
-A_MOVE, A_RECRUIT, A_FOLLOW, A_COLOR = range(4)
+A_MOVE, A_RECRUIT, A_FOLLOW, A_COLOR, A_IDLE = range(5)
 
-task_soldier = "'(0,100,0) color 20 follow".split()
-task_teamleader = "'(0,150,0) color 5 'soldier recruit 20 follow".split()
-task_groupleader = "'(0,200,0) color 3 'teamleader recruit 15 follow".split()
-task_platoonleader = "'(0,150,150) color 4 'groupleader recruit 10 follow".split()
-task_companyleader = "'(0,200,200) color 3 'platoonleader recruit 10 300 300 move".split()
-#task_battalionleader = "'(150,0,0) color 3 'companyleader recruit 300 300 move".split()
+task_soldier = "'(0,100,0) color 20 200 follow idle".split()
+task_teamleader = "'(0,150,0) color 5 'soldier recruit 20 20 follow idle".split()
+task_groupleader = "'(0,200,0) color 4 'teamleader recruit 15 20 follow idle".split()
+task_platoonleader = "'(0,150,150) color 4 'groupleader recruit 10 20 follow idle".split()
+task_companyleader = "'(0,200,200) color 3 'platoonleader recruit 10 30 follow idle".split()
+task_battalionleader = "'(150,0,0) color 3 'companyleader recruit 300 300 1000 move idle".split()
 #task_brigadeleader = "'(200,0,0) color 3 'battalionleader recruit 300 300 move".split()
 
 def is_number(s):
@@ -47,6 +47,9 @@ class Interpreter:
 		def pop():
 			return self.stack.pop(-1)
 
+		def popNone():
+			return self.stack.pop(-1) if len(self.stack) else None
+
 		def popn(n):
 			return [pop() for i in range(n)][::-1]
 
@@ -64,13 +67,15 @@ class Interpreter:
 		elif cmd.startswith("'"):
 			push(cmd[1:])
 		elif cmd == "move":
-			ret = (A_MOVE, popn(2))
+			ret = (A_MOVE, popn(3))
 		elif cmd == "recruit":
 			ret = (A_RECRUIT, popn(2))
 		elif cmd == "follow":
-			ret = (A_FOLLOW, pop())
+			ret = (A_FOLLOW, popn(2))
 		elif cmd == "color":
 			ret = (A_COLOR, pop())
+		elif cmd == "idle":
+			ret = (A_IDLE, popNone())
 		else:
 			raise Exception("UNKNWOWN", cmd)
 
@@ -99,15 +104,26 @@ class Bullet:
 		self.y = y
 		self.tx = tx
 		self.ty = ty
+		self.speed = 10
+		distance = ((self.tx-self.x)**2+(self.ty-self.y)**2)**0.5
+		self.dx = (self.tx-self.x)/distance*self.speed
+		self.dy = (self.ty-self.y)/distance*self.speed
+		self.x += self.dx*3
+		self.y += self.dy*3
 		self.t = 0
 
 	def update(self):
-		self.x += (self.tx-self.sx)/100
-		self.y += (self.ty-self.sy)/100
-		if self.t == 100:
-			hit = space.point_query_nearest((self.x, self.y), 10, ShapeFilter())
-			if hit and hit.shape is not None:
-				hit.shape._o.hp -= 100
+
+		self.x += self.dx
+		self.y += self.dy
+
+		#if self.t == 100:
+		hit = space.point_query_nearest((self.x, self.y), 2, ShapeFilter())
+		if hit and hit.shape is not None:
+			hit.shape._o.hp -= 100
+			return True
+
+		if self.t > 200:
 			return True
 		self.t += 1
 
@@ -159,6 +175,8 @@ class Person:
 		self.superior = superior
 		self.team = team
 
+		self.atime = 0
+
 		self.size = 10
 
 		global space
@@ -183,17 +201,22 @@ class Person:
 		self.cpu.task = task
 		self.activity = None
 		self.adata = None
+		self.atime = 0
 
 	def update(self):
 		step = False
 		if self.activity in [A_MOVE, A_FOLLOW]:
 			if self.activity == A_MOVE:
-				tx, ty = self.adata[0], self.adata[0]
+				tx, ty, td = self.adata[0], self.adata[1], self.adata[2]
 			else:
 				tx, ty = self.superior.body.position.x, self.superior.body.position.y
+				td = self.adata[1]
+
 			dx, dy = gel(tx, self.body.position.x), gel(ty, self.body.position.y)
 			#dist = ((self.y-ty)**2+(self.x-tx)**2)**0.5
-			if (dx == 0 and dy == 0):# or (self.activity == A_FOLLOW and dist < self.adata):
+			self.atime += 1
+			if (dx == 0 and dy == 0) or self.atime > td:# or (self.activity == A_FOLLOW and dist < self.adata):
+				self.atime = 0
 				step = True
 			else:
 				self.body.apply_force_at_local_point(Vec2d(dx,dy), (0,0))
@@ -213,12 +236,12 @@ class Person:
 			self.activity, self.adata = self.cpu.step()
 
 		if random() < 0.01:
-			target = choice([o for o in world if isinstance(o, Person)])
+			target = choice([o for o in world if isinstance(o, Person) and o.team != self.team])
 			world.append(Bullet(self.body.position.x, self.body.position.y, target.body.position.x, target.body.position.y))
 
 		if random() < 0.01:
-			target = choice([o for o in world if isinstance(o, Person)])
-			world.append(Grenade(self.body.position.x, self.body.position.y, target.body.position.x, target.body.position.y))
+			target = choice([o for o in world if isinstance(o, Person) and o.team != self.team])
+			#world.append(Grenade(self.body.position.x, self.body.position.y, target.body.position.x, target.body.position.y))
 
 
 		if self.hp <= 0:
