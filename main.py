@@ -11,7 +11,7 @@ pygame.display.set_caption("army")
 
 screen = pygame.display.set_mode((640,480))
 
-color = (255, 255, 255)
+color = (210, 210, 200)#(255, 255, 255)
 
 delta = 0.05
 

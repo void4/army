@@ -184,15 +184,15 @@ class Chair:
 
 		self.kill = False
 
-		self.sx = 12
-		self.sy = 14
+		self.sx = 10
+		self.sy = 10
 
 		global space
-		self.body = Body(1,100)
+		self.body = Body(1,1000)
 		poly = Poly.create_box(self.body, (self.sx, self.sy))
 		poly._o = self
 		self.body.position = x,y
-		self.color = (150,100,150)
+		self.color = (10,200,30)#(150,100,150)
 		space.add(self.body, poly)
 
 	def draw(self, screen):
@@ -202,11 +202,11 @@ class Chair:
 		return self.kill
 
 class Tree:
-	def __init__(self, x, y):
+	def __init__(self, x, y, task=None):
 
 		self.kill = False
 
-		self.task = Task("gotome 'Wood transform end".split())
+		self.task = Task("gotome 'Wood transform end".split()) if task is None else task
 
 		self.sx = 3
 		self.sy = 30
@@ -226,13 +226,13 @@ class Tree:
 		return self.kill
 
 class Wood:
-	def __init__(self, x, y):
+	def __init__(self, x, y, task=None):
 
 		self.kill = False
 
-		self.task = Task("gotome pickmeup 400 200 carryme dropme 'Chair transform end".split())
+		self.task = Task("gotome pickmeup 400 200 carryme dropme 'Chair transform end".split()) if task is None else task
 
-		self.sx = 15
+		self.sx = 5
 		self.sy = 5
 
 		global space
@@ -365,7 +365,8 @@ class Person:
 			if self.work is None:
 				targets = [o for o in world if hasattr(o, "task") and len(o.task.code)>0 and not o.task.hasworker]
 				if targets:
-					target = choice(targets)
+					x,y = self.body.position.x, self.body.position.y
+					target = sorted(targets, key=lambda t:dist(x, y, t.body.position.x, t.body.position.y))[0]#choice(targets)
 					target.task.hasworker = True
 					print("Taking task", target.task)
 					self.work = target
@@ -410,7 +411,7 @@ class Person:
 
 			tx, ty = self.adata.body.position.x, self.adata.body.position.y
 
-			if dist(x,y,tx,ty) < 20:
+			if dist(x,y,tx,ty) < 3:
 				self.adata.task.step += 1
 				self.activity = A_IDLE
 				self.adata = None
@@ -428,7 +429,7 @@ class Person:
 
 			tx, ty = self.adata[0]
 
-			if dist(x,y,tx,ty) < 20:
+			if dist(x,y,tx,ty) < 3:
 				self.adata[1].task.step += 1
 				self.activity = A_IDLE
 				self.adata = None
