@@ -230,7 +230,7 @@ class Wood:
 
 		self.kill = False
 
-		self.task = Task("gotome pickmeup carryme dropme 'Chair transform end".split())
+		self.task = Task("gotome pickmeup 400 200 carryme dropme 'Chair transform end".split())
 
 		self.sx = 15
 		self.sy = 5
@@ -252,7 +252,7 @@ class Wood:
 
 class Box:
 	def __init__(self, x, y):
-		self.task = Task("gotome pickmeup carryme dropme end".split())
+		self.task = Task("gotome pickmeup 200 200 carryme dropme end".split())
 
 		self.size = 15
 
@@ -387,7 +387,7 @@ class Person:
 					task.step += 1
 				elif cmd == "carryme":
 					self.activity = A_MOVETOPOSITION
-					self.adata = [[200, 200], self.work]
+					self.adata = [[task.stack.pop(-2), task.stack.pop(-1)], self.work]
 				elif cmd == "dropme":
 					self.inventory.remove(self.work)
 					task.step += 1
@@ -421,7 +421,7 @@ class Person:
 				#self.body.apply_force_at_local_point(Vec2d(dx,dy), (0,0))
 				#print(self.body.position)
 				self.body.position = Vec2d(x+dx,y+dy)
-				print("Moving", dx, dy)
+				#print("Moving", dx, dy)
 
 		elif self.activity == A_MOVETOPOSITION:
 			x, y = self.body.position.x, self.body.position.y
@@ -439,7 +439,7 @@ class Person:
 				#self.body.apply_force_at_local_point(Vec2d(dx,dy), (0,0))
 				#print(self.body.position)
 				self.body.position = Vec2d(x+dx,y+dy)
-				print("Moving", dx, dy)
+				#print("Moving", dx, dy)
 
 		else:
 			step = True
