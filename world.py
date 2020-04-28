@@ -7,3 +7,4 @@ world.append(Person(128, 128, None, task_worker, (255,255,0)))
 
 for i in range(5):
     world.append(Box(randint(0,400), randint(0,400)))
+    world.append(Wood(randint(0,400), randint(0,400)))

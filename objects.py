@@ -177,7 +177,53 @@ class Task:
 		self.code = code
 		self.hasworker = False
 		self.step = 0
-		self.taskstack = []
+		self.stack = []
+
+class Chair:
+	def __init__(self, x, y):
+
+		self.kill = False
+
+		self.sx = 12
+		self.sy = 14
+
+		global space
+		self.body = Body(1,100)
+		poly = Poly.create_box(self.body, (self.sx, self.sy))
+		poly._o = self
+		self.body.position = x,y
+		self.color = (150,100,150)
+		space.add(self.body, poly)
+
+	def draw(self, screen):
+		pygame.draw.rect(screen, self.color, pygame.Rect(self.body.position.x, self.body.position.y, self.sx, self.sy))
+
+	def update(self):
+		return self.kill
+
+class Wood:
+	def __init__(self, x, y):
+
+		self.kill = False
+
+		self.task = Task("gotome pickmeup carryme dropme 'Chair transform end".split())
+
+		self.sx = 15
+		self.sy = 5
+
+		global space
+		self.body = Body(1,100)
+		poly = Poly.create_box(self.body, (self.sx, self.sy))
+		poly._o = self
+		self.body.position = x,y
+		self.color = (100,50,50)
+		space.add(self.body, poly)
+
+	def draw(self, screen):
+		pygame.draw.rect(screen, self.color, pygame.Rect(self.body.position.x, self.body.position.y, self.sx, self.sy))
+
+	def update(self):
+		return self.kill
 
 class Box:
 	def __init__(self, x, y):
@@ -292,7 +338,7 @@ class Person:
 
 		elif self.activity == A_IDLE:
 			if self.work is None:
-				targets = [o for o in world if isinstance(o, Box) and len(o.task.code)>0 and not o.task.hasworker]
+				targets = [o for o in world if hasattr(o, "task") and len(o.task.code)>0 and not o.task.hasworker]
 				if targets:
 					target = choice(targets)
 					target.task.hasworker = True
@@ -303,7 +349,11 @@ class Person:
 				cmd = task.code[task.step]
 				print(cmd)
 				if is_number(cmd):
-					task.taskstack.append(int(cmd))
+					task.stack.append(int(cmd))
+					task.step += 1
+				elif cmd.startswith("'"):
+					task.stack.append(cmd[1:])
+					task.step += 1
 				elif cmd == "gotome":
 					self.activity = A_MOVETOOBJECT
 					self.adata = self.work
@@ -316,11 +366,16 @@ class Person:
 				elif cmd == "dropme":
 					self.inventory.remove(self.work)
 					task.step += 1
+				elif cmd == "transform":
+					name = task.stack.pop(-1)
+					world.append(globals()[name](self.work.body.position.x, self.work.body.position.y))
+					task.step += 1
+					self.work.kill = True
 				elif cmd == "end":
 					task.hasworker = False
 					task.code = []
 					task.step = None
-					task.taskstack = []
+					task.stack = []
 					self.work = None
 				else:
 					print("unknown cmd:", cmd)
