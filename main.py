@@ -103,7 +103,7 @@ while running:
 							selected.append(obj)
 
 
-					print("slected", selected)
+					print("Selected:", selected)
 
 				sel_start = None
 				sel_intermediate = None
