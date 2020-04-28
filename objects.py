@@ -320,7 +320,7 @@ class Person:
 
 			tx, ty = self.adata.body.position.x, self.adata.body.position.y
 
-			if dist(x,y,tx,ty) < 40:
+			if dist(x,y,tx,ty) < 20:
 				self.adata.taskstep += 1
 				self.activity = A_IDLE
 				self.adata = None
@@ -338,7 +338,7 @@ class Person:
 
 			tx, ty = self.adata[0]
 
-			if dist(x,y,tx,ty) < 40:
+			if dist(x,y,tx,ty) < 20:
 				self.adata[1].taskstep += 1
 				self.activity = A_IDLE
 				self.adata = None

@@ -5,5 +5,5 @@ from objects import *
 
 world.append(Person(128, 128, None, task_worker, (255,255,0)))
 
-for i in range(10):
+for i in range(5):
     world.append(Box(randint(0,400), randint(0,400)))

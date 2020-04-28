@@ -1,5 +1,6 @@
 #pyrisonarchitect
 from time import sleep
+from collections import defaultdict
 
 import pygame
 
@@ -22,6 +23,8 @@ sel_intermediate = None
 sel_end = None
 # TODO weakmap, in case object is removed
 selected = []
+
+keymap = defaultdict(lambda: 0)
 
 while running:
 	screen.fill(color)
@@ -49,44 +52,55 @@ while running:
 
 	i += 1
 
+
 	if sel_start:
 		sel_intermediate = pygame.mouse.get_pos()
 
 	for event in pygame.event.get():
-		if event.type == pygame.MOUSEBUTTONDOWN:
-			sel_start = pygame.mouse.get_pos()
-		elif event.type == pygame.MOUSEBUTTONUP:
-			pos = pygame.mouse.get_pos()
-
-			if pos == sel_start:
-				for selection in selected:
-					selection.settask(f"{pos[0]} {pos[1]} 200 move".split())
-				print("moved")
-
+		if event.type == pygame.KEYDOWN:
+			keymap[event.key] = 1
+		elif event.type == pygame.KEYUP:
+			keymap[event.key] = 0
+		elif event.type == pygame.MOUSEBUTTONDOWN:
+			if keymap[pygame.K_b]:
+				world.append(Box(*pygame.mouse.get_pos()))
 			else:
-				sel_end = pos
+				sel_start = pygame.mouse.get_pos()
+		elif event.type == pygame.MOUSEBUTTONUP:
 
-				x1 = min(sel_start[0], sel_end[0])
-				x2 = max(sel_start[0], sel_end[0])
-				y1 = min(sel_start[1], sel_end[1])
-				y2 = max(sel_start[1], sel_end[1])
+			if sel_start:
+				
+				pos = pygame.mouse.get_pos()
 
-				selected = []
+				if pos == sel_start:
+					for selection in selected:
+						selection.settask(f"{pos[0]} {pos[1]} 200 move".split())
+					print("moved")
 
-				for obj in world:
-					if not isinstance(obj, Person):
-						continue
+				else:
+					sel_end = pos
 
-					ox, oy = obj.body.position
-					if x1 <= ox <= x2 and y1 <= oy <= y2:
-						selected.append(obj)
+					x1 = min(sel_start[0], sel_end[0])
+					x2 = max(sel_start[0], sel_end[0])
+					y1 = min(sel_start[1], sel_end[1])
+					y2 = max(sel_start[1], sel_end[1])
+
+					selected = []
+
+					for obj in world:
+						if not isinstance(obj, Person):
+							continue
+
+						ox, oy = obj.body.position
+						if x1 <= ox <= x2 and y1 <= oy <= y2:
+							selected.append(obj)
 
 
-				print("slected", selected)
+					print("slected", selected)
 
-			sel_start = None
-			sel_intermediate = None
-			sel_end = None
+				sel_start = None
+				sel_intermediate = None
+				sel_end = None
 
 		elif event.type == pygame.QUIT:
 			running = False
@@ -97,6 +111,6 @@ while running:
 		for need in p.cats["Need"]:
 			#print(need["Name"], need["Value"])
 			pass
-			
+
 	pygame.display.flip()
 	sleep(delta)
