@@ -165,6 +165,8 @@ class Grenade:
 
 class Task:
 	def __init__(self, code):
+		if isinstance(code, str):
+			code = code.split()
 		self.code = code
 		self.hasworker = False
 		self.step = 0
@@ -181,13 +183,10 @@ def attachBoxBody(self, x, y, color=(0,0,0), w=10, h=10, impulse=100):
 	self.color = color
 	space.add(self.body, poly)
 
-class Chair:
-	def __init__(self, x, y):
-
+class PassiveObject:
+	def __init__(self, x, y, w=10, h=10, color=(40,40,40)):
 		self.kill = False
-
-		attachBoxBody(self, x, y, (10,200,30))#(150,100,150))
-
+		attachBoxBody(self, x, y, color, w, h)#(150,100,150))
 
 	def draw(self, screen):
 		pygame.draw.rect(screen, self.color, pygame.Rect(self.body.position.x, self.body.position.y, self.w, self.h))
@@ -195,50 +194,25 @@ class Chair:
 	def update(self):
 		return self.kill
 
-class Tree:
-	def __init__(self, x, y, task=None):
+class PassiveTaskObject(PassiveObject):
+	def __init__(self, x, y, w=10, h=10, color=(0,0,0), task=None):
+		super().__init__(x,y,w,h,color)
+		self.task = Task([]) if task is None else task
 
-		self.kill = False
+task_tree = Task("gotome 'wood transform end".split())
+color_tree = (100,250,50)
+size_tree = (3,30)
 
-		self.task = Task("gotome 'Wood transform end".split()) if task is None else task
+task_wood = "gotome pickmeup 400 200 carryme dropme 'chair transform end"
+color_wood = (100, 50, 50)
+size_wood = (5,5)
 
-		attachBoxBody(self, x, y, (100,250,50), 3, 30)
+task_box = "gotome pickmeup 200 200 carryme dropme end"
+color_box = (200,150,100)
+size_box = (15, 15)
 
-	def draw(self, screen):
-		pygame.draw.rect(screen, self.color, pygame.Rect(self.body.position.x, self.body.position.y, self.w, self.h))
-
-	def update(self):
-		return self.kill
-
-class Wood:
-	def __init__(self, x, y, task=None):
-
-		self.kill = False
-
-		self.task = Task("gotome pickmeup 400 200 carryme dropme 'Chair transform end".split()) if task is None else task
-
-		attachBoxBody(self, x, y, (100,50,50), 5, 5)
-
-	def draw(self, screen):
-		pygame.draw.rect(screen, self.color, pygame.Rect(self.body.position.x, self.body.position.y, self.w, self.h))
-
-	def update(self):
-		return self.kill
-
-
-class Box:
-	def __init__(self, x, y):
-		self.task = Task("gotome pickmeup 200 200 carryme dropme end".split())
-
-		attachBoxBody(self, x, y, (200,150,100), 15, 15)
-
-	def draw(self, screen):
-		pygame.draw.rect(screen, self.color, pygame.Rect(self.body.position.x, self.body.position.y, self.size, self.size))
-
-	def update(self):
-		pass
-
-
+color_chair = (20,20,200)
+size_chair = (10, 10)
 
 class Person:
 	def __init__(self, x, y, superior=None, task=None, team=(0,0,0)):
@@ -356,7 +330,21 @@ class Person:
 					task.step += 1
 				elif cmd == "transform":
 					name = task.stack.pop(-1)
-					world.append(globals()[name](self.work.body.position.x, self.work.body.position.y))
+
+					g = globals()
+
+					scolor = g["color_"+name]
+					ssize = g["size_"+name]
+
+					x, y = self.work.body.position.x, self.work.body.position.y
+
+					stask = "task_"+name
+					if stask in g:
+						obj = PassiveTaskObject(x, y, *ssize, scolor, g[stask])
+					else:
+						obj = PassiveObject(x, y, *ssize, scolor)
+
+					world.append(obj)
 					task.step += 1
 					self.work.kill = True
 				elif cmd == "end":
@@ -422,9 +410,6 @@ class Person:
 		global world
 		for i in range(self.adata[0]):
 			world.append(Person(self.body.position.x-16*i, self.body.position.y-10*i, superior=self, task=eval("task_"+self.adata[1]), team=self.team))
-
-	def step(self, tick):
-		pass
 
 	def shout(msg):
 		for obj in world:#quadtree
