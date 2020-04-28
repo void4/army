@@ -14,8 +14,6 @@ space.gravity = 0,0
 
 world = []
 
-class Task:
-	pass
 
 def gel(a,b):
 	if a < b:
@@ -174,11 +172,16 @@ class Grenade:
 		else:
 			pygame.draw.circle(screen, (250,110,110), (int(self.x), int(self.y)), self.t-100)
 
+class Task:
+	def __init__(self, code):
+		self.code = code
+		self.hasworker = False
+		self.step = 0
+		self.taskstack = []
+
 class Box:
 	def __init__(self, x, y):
-		self.task = "gotome pickmeup carryme dropme end".split()
-		self.hasworker = False
-		self.taskstep = 0
+		self.task = Task("gotome pickmeup carryme dropme end".split())
 
 		self.size = 15
 
@@ -195,6 +198,8 @@ class Box:
 
 	def update(self):
 		pass
+
+
 
 class Person:
 	def __init__(self, x, y, superior=None, task=None, team=(0,0,0)):
@@ -287,31 +292,35 @@ class Person:
 
 		elif self.activity == A_IDLE:
 			if self.work is None:
-				targets = [o for o in world if isinstance(o, Box) and len(o.task)>0 and not o.hasworker]
+				targets = [o for o in world if isinstance(o, Box) and len(o.task.code)>0 and not o.task.hasworker]
 				if targets:
 					target = choice(targets)
-					target.hasworker = True
+					target.task.hasworker = True
 					print("Taking task", target.task)
 					self.work = target
 			else:
-				cmd = self.work.task[self.work.taskstep]
+				task = self.work.task
+				cmd = task.code[task.step]
 				print(cmd)
-				if cmd == "gotome":
+				if is_number(cmd):
+					task.taskstack.append(int(cmd))
+				elif cmd == "gotome":
 					self.activity = A_MOVETOOBJECT
 					self.adata = self.work
 				elif cmd == "pickmeup":
 					self.inventory.append(self.work)
-					self.work.taskstep += 1
+					task.step += 1
 				elif cmd == "carryme":
 					self.activity = A_MOVETOPOSITION
 					self.adata = [[200, 200], self.work]
 				elif cmd == "dropme":
 					self.inventory.remove(self.work)
-					self.work.taskstep += 1
+					task.step += 1
 				elif cmd == "end":
-					self.work.hasworker = False
-					self.work.task = []
-					self.work.taskstep = None
+					task.hasworker = False
+					task.code = []
+					task.step = None
+					task.taskstack = []
 					self.work = None
 				else:
 					print("unknown cmd:", cmd)
@@ -322,7 +331,7 @@ class Person:
 			tx, ty = self.adata.body.position.x, self.adata.body.position.y
 
 			if dist(x,y,tx,ty) < 20:
-				self.adata.taskstep += 1
+				self.adata.task.step += 1
 				self.activity = A_IDLE
 				self.adata = None
 			else:
@@ -340,7 +349,7 @@ class Person:
 			tx, ty = self.adata[0]
 
 			if dist(x,y,tx,ty) < 20:
-				self.adata[1].taskstep += 1
+				self.adata[1].task.step += 1
 				self.activity = A_IDLE
 				self.adata = None
 			else:
