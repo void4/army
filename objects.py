@@ -290,11 +290,11 @@ class Person:
 				targets = [o for o in world if isinstance(o, Person) and o.team != self.team]
 				if targets:
 					target = choice(targets)
-
+					x,y = self.body.position.x, self.body.position.y
 					if random() < 0.9:
-						world.append(Bullet(self.body.position.x, self.body.position.y, target.body.position.x, target.body.position.y))
+						world.append(Bullet(x, y, target.body.position.x, target.body.position.y))
 					else:
-						world.append(Grenade(self.body.position.x, self.body.position.y, target.body.position.x, target.body.position.y))
+						world.append(Grenade(x, y, target.body.position.x, target.body.position.y))
 
 
 		elif self.activity == A_IDLE:
@@ -408,10 +408,12 @@ class Person:
 
 	def recruit(self):
 		global world
+		x, y = self.body.position.x, self.body.position.y
 		for i in range(self.adata[0]):
-			world.append(Person(self.body.position.x-16*i, self.body.position.y-10*i, superior=self, task=eval("task_"+self.adata[1]), team=self.team))
+			world.append(Person(x-16*i, y-10*i, superior=self, task=eval("task_"+self.adata[1]), team=self.team))
 
 	def shout(msg):
+		x, y = self.body.position.x, self.body.position.y
 		for obj in world:#quadtree
-			if isinstance(obj, Person) and ((obj.x-self.body.position.x)**2+(obj.y-self.body.position.y)**2)**0.5 < 200:
+			if isinstance(obj, Person) and dist(x,y,obj.x,obj.y) < 200:
 				obj.inbox.append(msg)
