@@ -65,7 +65,11 @@ while running:
 			mx, my = pygame.mouse.get_pos()
 			if keymap[pygame.K_b]:
 				world.append(Box(mx, my))
+			elif keymap[pygame.K_t]:
+				world.append(Tree(mx, my))
 			elif keymap[pygame.K_w]:
+				world.append(Wood(mx, my))
+			elif keymap[pygame.K_c]:
 				world.append(Person(mx, my, None, task_worker, (255,255,0)))
 			else:
 				sel_start = pygame.mouse.get_pos()

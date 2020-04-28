@@ -201,6 +201,30 @@ class Chair:
 	def update(self):
 		return self.kill
 
+class Tree:
+	def __init__(self, x, y):
+
+		self.kill = False
+
+		self.task = Task("gotome 'Wood transform end".split())
+
+		self.sx = 3
+		self.sy = 30
+
+		global space
+		self.body = Body(1,100)
+		poly = Poly.create_box(self.body, (self.sx, self.sy))
+		poly._o = self
+		self.body.position = x,y
+		self.color = (100,250,50)
+		space.add(self.body, poly)
+
+	def draw(self, screen):
+		pygame.draw.rect(screen, self.color, pygame.Rect(self.body.position.x, self.body.position.y, self.sx, self.sy))
+
+	def update(self):
+		return self.kill
+
 class Wood:
 	def __init__(self, x, y):
 
@@ -224,6 +248,7 @@ class Wood:
 
 	def update(self):
 		return self.kill
+
 
 class Box:
 	def __init__(self, x, y):
