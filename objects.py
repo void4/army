@@ -1,7 +1,13 @@
+from random import random, randint, choice
+from copy import deepcopy
+
 import pygame
 import pymunk
 from pymunk import Space, Body, Poly, Vec2d, ShapeFilter
-from random import random, randint, choice
+
+from parsetxt import parse
+
+cats = parse("Needs.txt")
 
 space = Space()
 space.gravity = 0,0
@@ -13,21 +19,26 @@ class Task:
 
 def gel(a,b):
 	if a < b:
-		return -1
+		return -3
 	elif a > b:
-		return 1
+		return 3
 	else:
 		return 0
 
-A_MOVE, A_RECRUIT, A_FOLLOW, A_COLOR, A_IDLE = range(5)
+def dist(x1,y1,x2,y2):
+	return ((x1-x2)**2+(y1-y2)**2)**0.5
+
+A_MOVE, A_RECRUIT, A_FOLLOW, A_COLOR, A_IDLE, A_SHOOT, A_MOVETOOBJECT, A_MOVETOPOSITION = range(8)
 
 task_soldier = "'(0,100,0) color 20 200 follow idle".split()
 task_teamleader = "'(0,150,0) color 5 'soldier recruit 20 20 follow idle".split()
 task_groupleader = "'(0,200,0) color 4 'teamleader recruit 15 20 follow idle".split()
-task_platoonleader = "'(0,150,150) color 4 'groupleader recruit 10 20 follow idle".split()
-task_companyleader = "'(0,200,200) color 3 'platoonleader recruit 10 30 follow idle".split()
-task_battalionleader = "'(150,0,0) color 3 'companyleader recruit 300 300 1000 move idle".split()
+task_platoonleader = "'(0,150,150) color 4 'groupleader recruit 300 300 1000 move idle".split()
+#task_companyleader = "'(0,200,200) color 3 'platoonleader recruit 10 30 follow idle".split()
+#task_battalionleader = "'(150,0,0) color 3 'companyleader recruit 300 300 1000 move idle".split()
 #task_brigadeleader = "'(200,0,0) color 3 'battalionleader recruit 300 300 move".split()
+
+task_worker = "idle".split()
 
 def is_number(s):
 	try:
@@ -120,7 +131,8 @@ class Bullet:
 		#if self.t == 100:
 		hit = space.point_query_nearest((self.x, self.y), 2, ShapeFilter())
 		if hit and hit.shape is not None:
-			hit.shape._o.hp -= 100
+			if isinstance(hit.shape._o, Person):
+				hit.shape._o.hp -= 100
 			return True
 
 		if self.t > 200:
@@ -162,6 +174,27 @@ class Grenade:
 		else:
 			pygame.draw.circle(screen, (250,110,110), (int(self.x), int(self.y)), self.t-100)
 
+class Box:
+	def __init__(self, x, y):
+		self.task = "gotome pickmeup carryme dropme end".split()
+		self.hasworker = False
+		self.taskstep = 0
+
+		self.size = 15
+
+		global space
+		self.body = Body(1,100)
+		poly = Poly.create_box(self.body, (self.size, self.size))
+		poly._o = self
+		self.body.position = x,y
+		self.color = (0,0,0)
+		space.add(self.body, poly)
+
+	def draw(self, screen):
+		pygame.draw.rect(screen, self.color, pygame.Rect(self.body.position.x, self.body.position.y, self.size, self.size))
+
+	def update(self):
+		pass
 
 class Person:
 	def __init__(self, x, y, superior=None, task=None, team=(0,0,0)):
@@ -178,6 +211,12 @@ class Person:
 		self.atime = 0
 
 		self.size = 10
+
+		self.work = None
+
+		self.cats = deepcopy(cats)
+		for need in self.cats["Need"]:
+			need["Value"] = 0
 
 		global space
 		self.body = Body(1,100)
@@ -204,6 +243,11 @@ class Person:
 		self.atime = 0
 
 	def update(self):
+
+		for need in self.cats["Need"]:
+			if "AutoCharge" in need.get("Properties", []):
+				need["Value"] += 1#*timeDelta
+
 		step = False
 		if self.activity in [A_MOVE, A_FOLLOW]:
 			if self.activity == A_MOVE:
@@ -229,19 +273,93 @@ class Person:
 		elif self.activity == A_COLOR:
 			self.color = eval(self.adata)
 			step = True
+		elif self.activity == A_SHOOT:
+			if random() < 0.01:
+				targets = [o for o in world if isinstance(o, Person) and o.team != self.team]
+				if targets:
+					target = choice(targets)
+
+					if random() < 0.9:
+						world.append(Bullet(self.body.position.x, self.body.position.y, target.body.position.x, target.body.position.y))
+					else:
+						world.append(Grenade(self.body.position.x, self.body.position.y, target.body.position.x, target.body.position.y))
+
+
+		elif self.activity == A_IDLE:
+			if self.work is None:
+				targets = [o for o in world if isinstance(o, Box) and len(o.task)>0]
+				if targets:
+					target = choice(targets)
+					target.hasworker = True
+					print("Taking task", target.task)
+					self.work = target
+			else:
+				cmd = self.work.task[self.work.taskstep]
+				print(cmd)
+				if cmd == "gotome":
+					self.activity = A_MOVETOOBJECT
+					self.adata = self.work
+				elif cmd == "pickmeup":
+					self.inventory.append(self.work)
+					self.work.taskstep += 1
+				elif cmd == "carryme":
+					self.activity = A_MOVETOPOSITION
+					self.adata = [[200, 200], self.work]
+				elif cmd == "dropme":
+					self.inventory.remove(self.work)
+					self.work.taskstep += 1
+				elif cmd == "end":
+					self.work.task = []
+					self.work.taskstep = None
+					self.work = None
+				else:
+					print("unknown cmd:", cmd)
+
+		elif self.activity == A_MOVETOOBJECT:
+			x, y = self.body.position.x, self.body.position.y
+
+			tx, ty = self.adata.body.position.x, self.adata.body.position.y
+
+			if dist(x,y,tx,ty) < 40:
+				self.adata.taskstep += 1
+				self.activity = A_IDLE
+				self.adata = None
+			else:
+				dx, dy = gel(tx, x), gel(ty, y)
+				#self.body.position.x += dx
+				#self.body.position.y += dy
+				#self.body.apply_force_at_local_point(Vec2d(dx,dy), (0,0))
+				#print(self.body.position)
+				self.body.position = Vec2d(x+dx,y+dy)
+				print("Moving", dx, dy)
+
+		elif self.activity == A_MOVETOPOSITION:
+			x, y = self.body.position.x, self.body.position.y
+
+			tx, ty = self.adata[0]
+
+			if dist(x,y,tx,ty) < 40:
+				self.adata[1].taskstep += 1
+				self.activity = A_IDLE
+				self.adata = None
+			else:
+				dx, dy = gel(tx, x), gel(ty, y)
+				#self.body.position.x += dx
+				#self.body.position.y += dy
+				#self.body.apply_force_at_local_point(Vec2d(dx,dy), (0,0))
+				#print(self.body.position)
+				self.body.position = Vec2d(x+dx,y+dy)
+				print("Moving", dx, dy)
+
 		else:
 			step = True
+
+		for item in self.inventory:
+			item.body.position = self.body.position
 
 		if step:
 			self.activity, self.adata = self.cpu.step()
 
-		if random() < 0.01:
-			target = choice([o for o in world if isinstance(o, Person) and o.team != self.team])
-			world.append(Bullet(self.body.position.x, self.body.position.y, target.body.position.x, target.body.position.y))
-
-		if random() < 0.01:
-			target = choice([o for o in world if isinstance(o, Person) and o.team != self.team])
-			#world.append(Grenade(self.body.position.x, self.body.position.y, target.body.position.x, target.body.position.y))
 
 
 		if self.hp <= 0:

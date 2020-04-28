@@ -8,7 +8,7 @@ from world import *
 pygame.init()
 pygame.display.set_caption("army")
 
-screen = pygame.display.set_mode((1920,1080))
+screen = pygame.display.set_mode((640,480))
 
 color = (255, 255, 255)
 
@@ -91,5 +91,12 @@ while running:
 		elif event.type == pygame.QUIT:
 			running = False
 
+	# how come deleted objects are not selected anymore?
+	if len(selected) > 0:
+		p = selected[0]
+		for need in p.cats["Need"]:
+			#print(need["Name"], need["Value"])
+			pass
+			
 	pygame.display.flip()
 	sleep(delta)
