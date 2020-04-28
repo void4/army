@@ -179,24 +179,27 @@ class Task:
 		self.step = 0
 		self.stack = []
 
+def attachBoxBody(self, x, y, color=(0,0,0), w=10, h=10, impulse=100):
+	global space
+	self.w = w
+	self.h = h
+	self.body = Body(1,impulse)
+	poly = Poly.create_box(self.body, (self.w, self.h))
+	poly._o = self
+	self.body.position = Vec2d(x,y)
+	self.color = color
+	space.add(self.body, poly)
+
 class Chair:
 	def __init__(self, x, y):
 
 		self.kill = False
 
-		self.sx = 10
-		self.sy = 10
+		attachBoxBody(self, x, y, (10,200,30))#(150,100,150))
 
-		global space
-		self.body = Body(1,1000)
-		poly = Poly.create_box(self.body, (self.sx, self.sy))
-		poly._o = self
-		self.body.position = x,y
-		self.color = (10,200,30)#(150,100,150)
-		space.add(self.body, poly)
 
 	def draw(self, screen):
-		pygame.draw.rect(screen, self.color, pygame.Rect(self.body.position.x, self.body.position.y, self.sx, self.sy))
+		pygame.draw.rect(screen, self.color, pygame.Rect(self.body.position.x, self.body.position.y, self.w, self.h))
 
 	def update(self):
 		return self.kill
@@ -208,19 +211,10 @@ class Tree:
 
 		self.task = Task("gotome 'Wood transform end".split()) if task is None else task
 
-		self.sx = 3
-		self.sy = 30
-
-		global space
-		self.body = Body(1,100)
-		poly = Poly.create_box(self.body, (self.sx, self.sy))
-		poly._o = self
-		self.body.position = x,y
-		self.color = (100,250,50)
-		space.add(self.body, poly)
+		attachBoxBody(self, x, y, (100,250,50), 3, 30)
 
 	def draw(self, screen):
-		pygame.draw.rect(screen, self.color, pygame.Rect(self.body.position.x, self.body.position.y, self.sx, self.sy))
+		pygame.draw.rect(screen, self.color, pygame.Rect(self.body.position.x, self.body.position.y, self.w, self.h))
 
 	def update(self):
 		return self.kill
@@ -232,19 +226,10 @@ class Wood:
 
 		self.task = Task("gotome pickmeup 400 200 carryme dropme 'Chair transform end".split()) if task is None else task
 
-		self.sx = 5
-		self.sy = 5
-
-		global space
-		self.body = Body(1,100)
-		poly = Poly.create_box(self.body, (self.sx, self.sy))
-		poly._o = self
-		self.body.position = x,y
-		self.color = (100,50,50)
-		space.add(self.body, poly)
+		attachBoxBody(self, x, y, (100,50,50), 5, 5)
 
 	def draw(self, screen):
-		pygame.draw.rect(screen, self.color, pygame.Rect(self.body.position.x, self.body.position.y, self.sx, self.sy))
+		pygame.draw.rect(screen, self.color, pygame.Rect(self.body.position.x, self.body.position.y, self.w, self.h))
 
 	def update(self):
 		return self.kill
@@ -254,15 +239,7 @@ class Box:
 	def __init__(self, x, y):
 		self.task = Task("gotome pickmeup 200 200 carryme dropme end".split())
 
-		self.size = 15
-
-		global space
-		self.body = Body(1,100)
-		poly = Poly.create_box(self.body, (self.size, self.size))
-		poly._o = self
-		self.body.position = x,y
-		self.color = (200,150,100)
-		space.add(self.body, poly)
+		attachBoxBody(self, x, y, (200,150,100), 15, 15)
 
 	def draw(self, screen):
 		pygame.draw.rect(screen, self.color, pygame.Rect(self.body.position.x, self.body.position.y, self.size, self.size))
@@ -294,13 +271,7 @@ class Person:
 		for need in self.cats["Need"]:
 			need["Value"] = 0
 
-		global space
-		self.body = Body(1,100)
-		poly = Poly.create_box(self.body, (self.size, self.size))
-		poly._o = self
-		self.body.position = x,y
-		self.color = (0,0,0)
-		space.add(self.body, poly)
+		attachBoxBody(self, x, y, (0,0,0), self.size, self.size)
 
 	def draw(self, screen):
 		pygame.draw.rect(screen, self.team, pygame.Rect(self.body.position.x, self.body.position.y, self.size, self.size))
