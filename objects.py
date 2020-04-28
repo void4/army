@@ -187,7 +187,7 @@ class Box:
 		poly = Poly.create_box(self.body, (self.size, self.size))
 		poly._o = self
 		self.body.position = x,y
-		self.color = (0,0,0)
+		self.color = (200,150,100)
 		space.add(self.body, poly)
 
 	def draw(self, screen):
@@ -287,7 +287,7 @@ class Person:
 
 		elif self.activity == A_IDLE:
 			if self.work is None:
-				targets = [o for o in world if isinstance(o, Box) and len(o.task)>0]
+				targets = [o for o in world if isinstance(o, Box) and len(o.task)>0 and not o.hasworker]
 				if targets:
 					target = choice(targets)
 					target.hasworker = True
@@ -309,6 +309,7 @@ class Person:
 					self.inventory.remove(self.work)
 					self.work.taskstep += 1
 				elif cmd == "end":
+					self.work.hasworker = False
 					self.work.task = []
 					self.work.taskstep = None
 					self.work = None

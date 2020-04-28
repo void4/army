@@ -62,14 +62,17 @@ while running:
 		elif event.type == pygame.KEYUP:
 			keymap[event.key] = 0
 		elif event.type == pygame.MOUSEBUTTONDOWN:
+			mx, my = pygame.mouse.get_pos()
 			if keymap[pygame.K_b]:
-				world.append(Box(*pygame.mouse.get_pos()))
+				world.append(Box(mx, my))
+			elif keymap[pygame.K_w]:
+				world.append(Person(mx, my, None, task_worker, (255,255,0)))
 			else:
 				sel_start = pygame.mouse.get_pos()
 		elif event.type == pygame.MOUSEBUTTONUP:
 
 			if sel_start:
-				
+
 				pos = pygame.mouse.get_pos()
 
 				if pos == sel_start:
