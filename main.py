@@ -20,10 +20,22 @@ manager = pygame_gui.UIManager(SCREEN_WH)
 
 room_buttons = []
 
+button_roommenu = pygame_gui.elements.UIButton(
+	relative_rect=pygame.Rect((50, 400), (50, 50)),
+	text="Room Menu",
+	manager=manager
+)
+
+roommenu = pygame_gui.elements.UIWindow(
+	rect=pygame.Rect((0, -5000), (400, 50)),
+	manager=manager
+)
+
 for i in range(0, 5):
 	button = pygame_gui.elements.UIButton(
-		relative_rect=pygame.Rect((350+i*60, 275), (50, 50)),
+		relative_rect=pygame.Rect((i*60, 0), (50, 50)),
 		text=f"{i}",
+		container=roommenu,
 		manager=manager
 	)
 	button.roomtype = i
@@ -160,13 +172,25 @@ while running:
 
 		elif event.type == pygame.USEREVENT:
 			if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
-				if event.ui_element in room_buttons:
-					if sel_type == "room" and sel_data == event.ui_element.roomtype:
+				uie = event.ui_element
+				if uie in room_buttons:
+					if sel_type == "room" and sel_data == uie.roomtype:
 						sel_type = None
 						sel_data = None
 					else:
 						sel_type = "room"
-						sel_data = event.ui_element.roomtype
+						sel_data = uie.roomtype
+
+				elif uie == button_roommenu:
+					menupos = roommenu.get_relative_rect()
+					if menupos.y > -30:
+						roommenu.set_position(Vec2d(0, -5000))
+						sel_type = None
+						sel_data = None
+					else:
+						# TODO: old position
+						roommenu.set_position(Vec2d(50, 300))
+
 
 		manager.process_events(event)
 
