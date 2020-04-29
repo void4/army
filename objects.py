@@ -186,7 +186,7 @@ def attachBoxBody(self, x, y, color=(0,0,0), w=10, h=10, impulse=100):
 class PassiveObject:
 	def __init__(self, x, y, w=10, h=10, image=None, color=(40,40,40)):
 		self.kill = False
-		self.image = pygame.image.load("images/"+image)
+		self.image = pygame.image.load(image)
 		attachBoxBody(self, x, y, color, w, h)#(150,100,150))
 
 	def draw(self, screen):
@@ -339,7 +339,7 @@ class Person:
 
 					scolor = g["color_"+name]
 					ssize = g["size_"+name]
-					simg = name+".png"
+					simg = "images/"+name+".png"
 
 					x, y = self.work.body.position.x, self.work.body.position.y
 
