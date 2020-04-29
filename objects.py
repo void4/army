@@ -387,6 +387,8 @@ class Person:
 				self.path = None
 				#TODO continue
 
+			# TODO object positition might change? /destroyed
+
 			tx, ty = self.path[0]
 			tx *= GS
 			ty *= GS

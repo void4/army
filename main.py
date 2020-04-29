@@ -116,7 +116,7 @@ while running:
 					elif sel_type == "room":
 						for y in range(y1//GS, y2//GS):
 							for x in range(x1//GS, x2//GS):
-								worldgrid[y][x] = 2 if worldgrid[2] == 1 else 1
+								worldgrid[y][x] = 2 if worldgrid[y][x] == 1 else 1
 								updatePathgrid()
 					else:
 						print("Unknown sel_type:", sel_type)
