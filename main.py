@@ -18,11 +18,9 @@ screen = pygame.display.set_mode(SCREEN_WH)
 manager = pygame_gui.UIManager(SCREEN_WH)
 #manager.set_visual_debug_mode(True)
 
-room_buttons = []
-
 button_roommenu = pygame_gui.elements.UIButton(
 	relative_rect=pygame.Rect((50, 400), (50, 50)),
-	text="Room Menu",
+	text="Rooms",
 	manager=manager
 )
 
@@ -30,6 +28,8 @@ roommenu = pygame_gui.elements.UIWindow(
 	rect=pygame.Rect((0, -5000), (400, 50)),
 	manager=manager
 )
+
+room_buttons = []
 
 for i in range(0, 5):
 	button = pygame_gui.elements.UIButton(
@@ -41,6 +41,52 @@ for i in range(0, 5):
 	button.roomtype = i
 	room_buttons.append(button)
 
+button_staffmenu = pygame_gui.elements.UIButton(
+	relative_rect=pygame.Rect((100, 400), (50, 50)),
+	text="Staff",
+	manager=manager
+)
+
+staffmenu = pygame_gui.elements.UIWindow(
+	rect=pygame.Rect((0, -5000), (400, 50)),
+	manager=manager
+)
+
+staff_buttons = []
+
+for staff in [task_worker]:
+	button = pygame_gui.elements.UIButton(
+		relative_rect=pygame.Rect((i*60, 0), (50, 50)),
+		text=f"Hire",
+		container=staffmenu,
+		manager=manager
+	)
+	button.stafftype = staff
+	staff_buttons.append(button)
+
+button_objectmenu = pygame_gui.elements.UIButton(
+	relative_rect=pygame.Rect((150, 400), (50, 50)),
+	text="Objects",
+	manager=manager
+)
+
+objectmenu = pygame_gui.elements.UIWindow(
+	rect=pygame.Rect((0, -5000), (400, 50)),
+	manager=manager
+)
+
+object_buttons = []
+
+buildable_objects = ["tree", "wood", "chair"]
+for i, objectname in enumerate(buildable_objects):
+	button = pygame_gui.elements.UIButton(
+		relative_rect=pygame.Rect((i*60, 0), (50, 50)),
+		text=objectname,
+		container=objectmenu,
+		manager=manager
+	)
+	button.objecttype = objectname
+	object_buttons.append(button)
 
 clock = pygame.time.Clock()
 
@@ -129,8 +175,18 @@ while running:
 				pos = pygame.mouse.get_pos()
 
 				if pos == sel_start:
-					for selection in selected:
-						selection.settask(f"{pos[0]} {pos[1]} 1000 move".split())
+					if sel_type == "select":
+						for selection in selected:
+							selection.settask(f"{pos[0]} {pos[1]} 1000 move".split())
+					elif sel_type == "hire":
+						world.append(Person(pos[0], pos[1], None, sel_data, (255,255,0)))
+					elif sel_type == "place":
+						print(*pos, sel_data)
+						createObjectAt(sel_data, *pos)
+					else:
+						print("unknown click sel_type", sel_type)
+						sel_type = None
+						sel_data = None
 
 				else:
 					sel_end = pos
@@ -158,6 +214,11 @@ while running:
 							for x in range(x1//GS, x2//GS):
 								worldgrid[y][x] = sel_data if event.button == 1 else 1#2 if worldgrid[y][x] == 1 else 1
 								updatePathgrid()
+
+					elif sel_type == "hire":
+						sel_type = None
+						sel_data = None
+
 					else:
 						print("Unknown sel_type:", sel_type)
 
@@ -181,6 +242,22 @@ while running:
 						sel_type = "room"
 						sel_data = uie.roomtype
 
+				elif uie in staff_buttons:
+					if sel_type == "hire" and sel_data == uie.stafftype:
+						sel_type = None
+						sel_data = None
+					else:
+						sel_type = "hire"
+						sel_data = uie.stafftype
+
+				elif uie in object_buttons:
+					if sel_type == "place" and sel_data == uie.objecttype:
+						sel_type = None
+						sel_data = None
+					else:
+						sel_type = "place"
+						sel_data = uie.objecttype
+
 				elif uie == button_roommenu:
 					menupos = roommenu.get_relative_rect()
 					if menupos.y > -30:
@@ -191,6 +268,25 @@ while running:
 						# TODO: old position
 						roommenu.set_position(Vec2d(50, 300))
 
+				elif uie == button_staffmenu:
+					menupos = staffmenu.get_relative_rect()
+					if menupos.y > -30:
+						staffmenu.set_position(Vec2d(0, -5000))
+						sel_type = None
+						sel_data = None
+					else:
+						# TODO: old position
+						staffmenu.set_position(Vec2d(50, 300))
+
+				elif uie == button_objectmenu:
+					menupos = objectmenu.get_relative_rect()
+					if menupos.y > -30:
+						objectmenu.set_position(Vec2d(0, -5000))
+						sel_type = None
+						sel_data = None
+					else:
+						# TODO: old position
+						objectmenu.set_position(Vec2d(50, 300))
 
 		manager.process_events(event)
 
