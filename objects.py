@@ -29,11 +29,25 @@ GS = 10
 worldgrid = []
 
 for y in range(0, WH, GS):
-    worldgrid.append([])
-    for x in range(0, WW, GS):
-        worldgrid[-1].append(0)
+	worldgrid.append([])
+	for x in range(0, WW, GS):
+		worldgrid[-1].append(1)
 
-grid = Grid(matrix=worldgrid)
+for i in range(20):
+	worldgrid[20+i][30] = 0
+
+class World:
+	def update(self):
+		return False
+
+	def draw(self, screen):
+		for y in range(0, WH//GS):
+			for x in range(0, WW//GS):
+				if worldgrid[y][x] <= 0:
+					pygame.draw.rect(screen, (10,10,10), pygame.Rect(x*GS,y*GS,GS,GS))
+
+
+world.append(World())
 
 def gel(a,b):
 	if a < b:
@@ -255,6 +269,8 @@ class Person:
 
 		self.work = None
 
+		self.path = None
+
 		self.cats = deepcopy(cats)
 		for need in self.cats["Need"]:
 			need["Value"] = 0
@@ -289,17 +305,30 @@ class Person:
 			x, y = self.body.position.x, self.body.position.y
 			tx, ty, td = self.adata[0], self.adata[1], self.adata[2]
 
-			if dist(x,y,tx,ty) < 3 or self.atime > td:
+			if self.path is None:
+				grid = Grid(matrix=worldgrid)
+				start = grid.node(int(x//GS), int(y//GS))
+				end = grid.node(int(tx//GS), int(ty//GS))
+				finder = AStarFinder(diagonal_movement=DiagonalMovement.always)
+				path, runs = finder.find_path(start, end, grid)
+				self.path = path
+				#print(path)
+				print(f"Found path of length {len(path)} in {runs} runs")
+
+			tx, ty = self.path[0]
+			tx *= GS
+			ty *= GS
+
+			if dist(x,y,tx,ty) < 3:
+				self.path.pop(0)
+
+			if len(self.path) == 0 or self.atime > td:
 				self.activity = A_IDLE
 				self.adata = None
+				self.path = None
 			else:
 				dx, dy = gel(tx, x), gel(ty, y)
-				#self.body.position.x += dx
-				#self.body.position.y += dy
-				#self.body.apply_force_at_local_point(Vec2d(dx,dy), (0,0))
-				#print(self.body.position)
 				self.body.position = Vec2d(x+dx,y+dy)
-				#print("Moving", dx, dy)
 				self.atime += 1
 
 
@@ -316,8 +345,6 @@ class Person:
 				step = True
 			else:
 				self.body.apply_force_at_local_point(Vec2d(dx,dy), (0,0))
-				#self.body.position.x += dx
-				#self.body.position.y += dy
 		elif self.activity == A_RECRUIT:
 			world.append(Shout(self.body.position.x, self.body.position.y))
 			self.recruit()

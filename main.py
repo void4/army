@@ -63,7 +63,9 @@ while running:
 			keymap[event.key] = 0
 		elif event.type == pygame.MOUSEBUTTONDOWN:
 			mx, my = pygame.mouse.get_pos()
-			if keymap[pygame.K_b]:
+			if keymap[pygame.K_g]:
+				worldgrid[my//GS][mx//GS] = 1 - worldgrid[my//GS][mx//GS]
+			elif keymap[pygame.K_b]:
 				world.append(Box(mx, my))
 			elif keymap[pygame.K_t]:
 				world.append(Tree(mx, my))
