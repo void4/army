@@ -149,25 +149,32 @@ while running:
 			keymap[event.key] = 0
 		elif event.type == pygame.MOUSEBUTTONDOWN:
 			mx, my = pygame.mouse.get_pos()
-			if keymap[pygame.K_g]:
-				worldgrid[my//GS][mx//GS] = 1 - worldgrid[my//GS][mx//GS]
-			elif keymap[pygame.K_b]:
-				createObjectAt("box", mx, my)
-			elif keymap[pygame.K_t]:
-				createObjectAt("tree", mx, my)
-			elif keymap[pygame.K_w]:
-				createObjectAt("wood", mx, my)
-			elif keymap[pygame.K_c]:
-				world.append(Person(mx, my, None, task_worker, (255,255,0)))
+
+			# Is there already a builtin function for this?
+			for window in [roommenu, staffmenu, objectmenu]:
+				if window.check_clicked_inside_or_blocking(event):
+					break
 			else:
-				if sel_type is not None:
-					pass
-				elif keymap[pygame.K_r]:
-					sel_type = "room"
-					sel_data = 2
+				if keymap[pygame.K_g]:
+					worldgrid[my//GS][mx//GS] = 1 - worldgrid[my//GS][mx//GS]
+				elif keymap[pygame.K_b]:
+					createObjectAt("box", mx, my)
+				elif keymap[pygame.K_t]:
+					createObjectAt("tree", mx, my)
+				elif keymap[pygame.K_w]:
+					createObjectAt("wood", mx, my)
+				elif keymap[pygame.K_c]:
+					world.append(Person(mx, my, None, task_worker, (255,255,0)))
 				else:
-					sel_type = "select"
-				sel_start = pygame.mouse.get_pos()
+					if sel_type is not None:
+						pass
+					elif keymap[pygame.K_r]:
+						sel_type = "room"
+						sel_data = 2
+					else:
+						sel_type = "select"
+					sel_start = pygame.mouse.get_pos()
+					
 		elif event.type == pygame.MOUSEBUTTONUP:
 
 			if sel_start:
