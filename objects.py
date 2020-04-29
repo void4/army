@@ -36,6 +36,26 @@ for y in range(0, WH, GS):
 for i in range(20):
 	worldgrid[20+i][30] = 0
 
+for x in range(10):
+	for y in range(20):
+		worldgrid[5+y][5+x] = 2
+
+class ImageCache:
+	def __init__(self):
+		self.cache = {}
+	def __getitem__(self, path):
+		if not path in self.cache:
+			self.cache[path] = pygame.image.load(path)
+		return self.cache[path]
+
+imagecache = ImageCache()
+
+pathgrid = [[1 if worldgrid[y][x] > 0 else 0 for x in range(WW//GS)] for y in range(WH//GS)]
+
+tileimages = {
+	2: "red.png"
+}
+
 class World:
 	def update(self):
 		return False
@@ -45,6 +65,8 @@ class World:
 			for x in range(0, WW//GS):
 				if worldgrid[y][x] <= 0:
 					pygame.draw.rect(screen, (10,10,10), pygame.Rect(x*GS,y*GS,GS,GS))
+				elif worldgrid[y][x] > 1:
+					screen.blit(imagecache["images/"+tileimages[worldgrid[y][x]]], (x*GS, y*GS))
 
 
 world.append(World())
@@ -220,7 +242,7 @@ class PassiveObject:
 	def __init__(self, x, y, w=10, h=10, image=None, color=(40,40,40)):
 		self.kill = False
 		try:
-			self.image = pygame.image.load(image)
+			self.image = imagecache[image]
 		except:
 			print("No image for:", image)
 			self.image = None
@@ -341,7 +363,7 @@ class Person:
 				td = self.adata
 
 			if self.path is None:
-				grid = Grid(matrix=worldgrid)
+				grid = Grid(matrix=pathgrid)
 				start = grid.node(int(x//GS), int(y//GS))
 				end = grid.node(int(tx//GS), int(ty//GS))
 				finder = AStarFinder(diagonal_movement=DiagonalMovement.always)
