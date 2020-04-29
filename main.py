@@ -18,6 +18,7 @@ delta = 0.025
 i = 0
 running = True
 
+sel_type = None
 sel_start = None
 sel_intermediate = None
 sel_end = None
@@ -43,7 +44,8 @@ while running:
 		x2 = max(sel_start[0], sel_intermediate[0])
 		y1 = min(sel_start[1], sel_intermediate[1])
 		y2 = max(sel_start[1], sel_intermediate[1])
-		pygame.draw.rect(screen, (0, 100, 255), (x1, y1, x2-x1, y2-y1), 2)
+		sel_color = (0, 100, 255) if sel_type == "select" else (255,0,0)
+		pygame.draw.rect(screen, sel_color, (x1, y1, x2-x1, y2-y1), 2)
 
 	for obj in killlist:
 		world.remove(obj)
@@ -74,6 +76,10 @@ while running:
 			elif keymap[pygame.K_c]:
 				world.append(Person(mx, my, None, task_worker, (255,255,0)))
 			else:
+				if keymap[pygame.K_r]:
+					sel_type = "room"
+				else:
+					sel_type = "select"
 				sel_start = pygame.mouse.get_pos()
 		elif event.type == pygame.MOUSEBUTTONUP:
 
@@ -94,18 +100,26 @@ while running:
 					y1 = min(sel_start[1], sel_end[1])
 					y2 = max(sel_start[1], sel_end[1])
 
-					selected = []
+					if sel_type == "select":
+						selected = []
 
-					for obj in world:
-						if not isinstance(obj, Person):
-							continue
+						for obj in world:
+							if not isinstance(obj, Person):
+								continue
 
-						ox, oy = obj.body.position
-						if x1 <= ox <= x2 and y1 <= oy <= y2:
-							selected.append(obj)
+							ox, oy = obj.body.position
+							if x1 <= ox <= x2 and y1 <= oy <= y2:
+								selected.append(obj)
 
 
-					print("Selected:", selected)
+						print("Selected:", selected)
+					elif sel_type == "room":
+						for y in range(y1//GS, y2//GS):
+							for x in range(x1//GS, x2//GS):
+								worldgrid[y][x] = 2 if worldgrid[2] == 1 else 1
+								updatePathgrid()
+					else:
+						print("Unknown sel_type:", sel_type)
 
 				sel_start = None
 				sel_intermediate = None

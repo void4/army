@@ -50,10 +50,18 @@ class ImageCache:
 
 imagecache = ImageCache()
 
-pathgrid = [[1 if worldgrid[y][x] > 0 else 0 for x in range(WW//GS)] for y in range(WH//GS)]
+pathgrid = None
+
+def updatePathgrid():
+	global pathgrid, worldgrid
+	pathgrid = [[1 if worldgrid[y][x] > 0 else 0 for x in range(WW//GS)] for y in range(WH//GS)]
+
+updatePathgrid()
+
+R_BLOCKED, R_AIR, R_RED = range(3)
 
 tileimages = {
-	2: "red.png"
+	R_RED: "red.png"
 }
 
 class World:
