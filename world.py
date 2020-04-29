@@ -25,7 +25,7 @@ draw.text((0,16), "World!", font=fnt, fill=1)
 for y in range(ih):
     for x in range(iw):
         if img.getpixel((x,y)) == 1:
-            world.append(PassiveTaskObject(randint(0,640), randint(0,480), *size_wood, color_wood, Task(f"gotome pickmeup {x*iscale} {y*iscale} carryme dropme 'chair transform end".split())))
+            world.append(PassiveTaskObject(randint(0,640), randint(0,480), *size_wood, "wood.png", color_wood, Task(f"gotome pickmeup {x*iscale} {y*iscale} carryme dropme 'chair transform end".split())))
 
 for i in range(50):
     #world.append(Box(randint(0,400), randint(0,400)))

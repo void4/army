@@ -184,19 +184,23 @@ def attachBoxBody(self, x, y, color=(0,0,0), w=10, h=10, impulse=100):
 	space.add(self.body, poly)
 
 class PassiveObject:
-	def __init__(self, x, y, w=10, h=10, color=(40,40,40)):
+	def __init__(self, x, y, w=10, h=10, image=None, color=(40,40,40)):
 		self.kill = False
+		self.image = pygame.image.load("images/"+image)
 		attachBoxBody(self, x, y, color, w, h)#(150,100,150))
 
 	def draw(self, screen):
-		pygame.draw.rect(screen, self.color, pygame.Rect(self.body.position.x, self.body.position.y, self.w, self.h))
+		if self.image:
+			screen.blit(self.image, (self.body.position.x, self.body.position.y))
+		else:
+			pygame.draw.rect(screen, self.color, pygame.Rect(self.body.position.x, self.body.position.y, self.w, self.h))
 
 	def update(self):
 		return self.kill
 
 class PassiveTaskObject(PassiveObject):
-	def __init__(self, x, y, w=10, h=10, color=(0,0,0), task=None):
-		super().__init__(x,y,w,h,color)
+	def __init__(self, x, y, w=10, h=10, image=None, color=(0,0,0), task=None):
+		super().__init__(x,y,w,h,image,color)
 		self.task = Task([]) if task is None else task
 
 task_tree = Task("gotome 'wood transform end".split())
@@ -335,14 +339,15 @@ class Person:
 
 					scolor = g["color_"+name]
 					ssize = g["size_"+name]
+					simg = name+".png"
 
 					x, y = self.work.body.position.x, self.work.body.position.y
 
 					stask = "task_"+name
 					if stask in g:
-						obj = PassiveTaskObject(x, y, *ssize, scolor, g[stask])
+						obj = PassiveTaskObject(x, y, *ssize, simg, scolor, g[stask])
 					else:
-						obj = PassiveObject(x, y, *ssize, scolor)
+						obj = PassiveObject(x, y, *ssize, simg, scolor)
 
 					world.append(obj)
 					task.step += 1
