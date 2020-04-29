@@ -51,9 +51,9 @@ world.append(World())
 
 def gel(a,b):
 	if a < b:
-		return -3
+		return -2#use 3 for hectic people :)
 	elif a > b:
-		return 3
+		return 2
 	else:
 		return 0
 
@@ -321,6 +321,12 @@ class Person:
 				self.path = path
 				#print(path)
 				print(f"Found path of length {len(path)} in {runs} runs")
+
+			if len(self.path) == 0:
+				print("Couldn't find path")
+				self.activity = A_IDLE
+				self.adata = None
+				self.path = None
 
 			tx, ty = self.path[0]
 			tx *= GS

@@ -13,7 +13,7 @@ screen = pygame.display.set_mode((640,480))
 
 color = (210, 210, 200)#(255, 255, 255)
 
-delta = 0.05
+delta = 0.025
 
 i = 0
 running = True
