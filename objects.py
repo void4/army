@@ -15,6 +15,25 @@ space.gravity = 0,0
 
 world = []
 
+from pathfinding.core.diagonal_movement import DiagonalMovement
+from pathfinding.core.grid import Grid
+from pathfinding.finder.a_star import AStarFinder
+
+# World size
+WW = 640
+WH = 480
+
+# Grid size
+GS = 10
+
+worldgrid = []
+
+for y in range(0, WH, GS):
+    worldgrid.append([])
+    for x in range(0, WW, GS):
+        worldgrid[-1].append(0)
+
+grid = Grid(matrix=worldgrid)
 
 def gel(a,b):
 	if a < b:
@@ -265,12 +284,29 @@ class Person:
 				need["Value"] += 1#*timeDelta
 
 		step = False
-		if self.activity in [A_MOVE, A_FOLLOW]:
-			if self.activity == A_MOVE:
-				tx, ty, td = self.adata[0], self.adata[1], self.adata[2]
+
+		if self.activity == A_MOVE:
+			x, y = self.body.position.x, self.body.position.y
+			tx, ty, td = self.adata[0], self.adata[1], self.adata[2]
+
+			if dist(x,y,tx,ty) < 3 or self.atime > td:
+				self.activity = A_IDLE
+				self.adata = None
 			else:
-				tx, ty = self.superior.body.position.x, self.superior.body.position.y
-				td = self.adata[1]
+				dx, dy = gel(tx, x), gel(ty, y)
+				#self.body.position.x += dx
+				#self.body.position.y += dy
+				#self.body.apply_force_at_local_point(Vec2d(dx,dy), (0,0))
+				#print(self.body.position)
+				self.body.position = Vec2d(x+dx,y+dy)
+				#print("Moving", dx, dy)
+				self.atime += 1
+
+
+
+		elif self.activity == A_FOLLOW:
+			tx, ty = self.superior.body.position.x, self.superior.body.position.y
+			td = self.adata[1]
 
 			dx, dy = gel(tx, self.body.position.x), gel(ty, self.body.position.y)
 			#dist = ((self.y-ty)**2+(self.x-tx)**2)**0.5
