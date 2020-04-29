@@ -219,7 +219,11 @@ def attachBoxBody(self, x, y, color=(0,0,0), w=10, h=10, impulse=100):
 class PassiveObject:
 	def __init__(self, x, y, w=10, h=10, image=None, color=(40,40,40)):
 		self.kill = False
-		self.image = pygame.image.load(image)
+		try:
+			self.image = pygame.image.load(image)
+		except:
+			print("No image for:", image)
+			self.image = None
 		attachBoxBody(self, x, y, color, w, h)#(150,100,150))
 
 	def draw(self, screen):
@@ -234,22 +238,40 @@ class PassiveObject:
 class PassiveTaskObject(PassiveObject):
 	def __init__(self, x, y, w=10, h=10, image=None, color=(0,0,0), task=None):
 		super().__init__(x,y,w,h,image,color)
+		if isinstance(task, str):
+			task = Task(task)
 		self.task = Task([]) if task is None else task
 
 task_tree = Task("gotome 'wood transform end".split())
 color_tree = (100,250,50)
 size_tree = (3,30)
 
-task_wood = "gotome pickmeup 400 200 carryme dropme 'chair transform end"
+task_wood = "gotome pickmeup 60 400 200 carryme dropme 'chair transform end"
 color_wood = (100, 50, 50)
 size_wood = (5,5)
 
-task_box = "gotome pickmeup 200 200 carryme dropme end"
+task_box = "gotome pickmeup 60 200 200 carryme dropme end"
 color_box = (200,150,100)
 size_box = (15, 15)
 
 color_chair = (20,20,200)
 size_chair = (10, 10)
+
+def createObjectAt(name, x, y):
+	g = globals()
+
+	scolor = g["color_"+name]
+	ssize = g["size_"+name]
+	simg = "images/"+name+".png"
+
+
+	stask = "task_"+name
+	if stask in g:
+		obj = PassiveTaskObject(x, y, *ssize, simg, scolor, g[stask])
+	else:
+		obj = PassiveObject(x, y, *ssize, simg, scolor)
+
+	world.append(obj)
 
 class Person:
 	def __init__(self, x, y, superior=None, task=None, team=(0,0,0)):
@@ -309,9 +331,14 @@ class Person:
 
 		step = False
 
-		if self.activity == A_MOVE:
+		if self.activity in [A_MOVE, A_MOVETOPOSITION, A_MOVETOOBJECT]:
 			x, y = self.body.position.x, self.body.position.y
-			tx, ty, td = self.adata[0], self.adata[1], self.adata[2]
+
+			if self.activity in [A_MOVE, A_MOVETOPOSITION]:
+				tx, ty, td = self.adata[0], self.adata[1], self.adata[2]
+			else:
+				tx, ty = self.work.body.position.x, self.work.body.position.y
+				td = self.adata
 
 			if self.path is None:
 				grid = Grid(matrix=worldgrid)
@@ -328,6 +355,7 @@ class Person:
 				self.activity = A_IDLE
 				self.adata = None
 				self.path = None
+				#TODO continue
 
 			tx, ty = self.path[0]
 			tx *= GS
@@ -337,9 +365,15 @@ class Person:
 				self.path.pop(0)
 
 			if len(self.path) == 0 or self.atime > td:
-				self.activity = A_IDLE
+
+				if self.activity in [A_MOVETOOBJECT, A_MOVETOPOSITION]:
+					self.work.task.step += 1
+
 				self.adata = None
 				self.path = None
+				self.activity = A_IDLE
+				self.atime = 0
+
 			else:
 				dx, dy = gel(tx, x), gel(ty, y)
 				self.body.position = Vec2d(x+dx,y+dy)
@@ -400,34 +434,23 @@ class Person:
 					task.step += 1
 				elif cmd == "gotome":
 					self.activity = A_MOVETOOBJECT
-					self.adata = self.work
+					self.adata = 200
 				elif cmd == "pickmeup":
 					self.inventory.append(self.work)
 					task.step += 1
 				elif cmd == "carryme":
 					self.activity = A_MOVETOPOSITION
-					self.adata = [[task.stack.pop(-2), task.stack.pop(-1)], self.work]
+					self.adata = [task.stack.pop(-3), task.stack.pop(-2), task.stack.pop(-1)]
 				elif cmd == "dropme":
 					self.inventory.remove(self.work)
 					task.step += 1
 				elif cmd == "transform":
 					name = task.stack.pop(-1)
 
-					g = globals()
-
-					scolor = g["color_"+name]
-					ssize = g["size_"+name]
-					simg = "images/"+name+".png"
-
 					x, y = self.work.body.position.x, self.work.body.position.y
 
-					stask = "task_"+name
-					if stask in g:
-						obj = PassiveTaskObject(x, y, *ssize, simg, scolor, g[stask])
-					else:
-						obj = PassiveObject(x, y, *ssize, simg, scolor)
+					createObjectAt(name, x, y)
 
-					world.append(obj)
 					task.step += 1
 					self.work.kill = True
 				elif cmd == "end":
@@ -438,43 +461,6 @@ class Person:
 					self.work = None
 				else:
 					print("unknown cmd:", cmd)
-
-		elif self.activity == A_MOVETOOBJECT:
-			x, y = self.body.position.x, self.body.position.y
-
-			tx, ty = self.adata.body.position.x, self.adata.body.position.y
-
-			if dist(x,y,tx,ty) < 3:
-				self.adata.task.step += 1
-				self.activity = A_IDLE
-				self.adata = None
-			else:
-				dx, dy = gel(tx, x), gel(ty, y)
-				#self.body.position.x += dx
-				#self.body.position.y += dy
-				#self.body.apply_force_at_local_point(Vec2d(dx,dy), (0,0))
-				#print(self.body.position)
-				self.body.position = Vec2d(x+dx,y+dy)
-				#print("Moving", dx, dy)
-
-		elif self.activity == A_MOVETOPOSITION:
-			x, y = self.body.position.x, self.body.position.y
-
-			tx, ty = self.adata[0]
-
-			if dist(x,y,tx,ty) < 3:
-				self.adata[1].task.step += 1
-				self.activity = A_IDLE
-				self.adata = None
-			else:
-				dx, dy = gel(tx, x), gel(ty, y)
-				#self.body.position.x += dx
-				#self.body.position.y += dy
-				#self.body.apply_force_at_local_point(Vec2d(dx,dy), (0,0))
-				#print(self.body.position)
-				self.body.position = Vec2d(x+dx,y+dy)
-				#print("Moving", dx, dy)
-
 		else:
 			step = True
 
