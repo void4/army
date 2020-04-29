@@ -299,6 +299,7 @@ class Person:
 		self.activity = None
 		self.adata = None
 		self.atime = 0
+		self.path = None
 
 	def update(self):
 
@@ -386,6 +387,7 @@ class Person:
 					target.task.hasworker = True
 					print("Taking task", target.task)
 					self.work = target
+				#else: step=True?
 			else:
 				task = self.work.task
 				cmd = task.code[task.step]
