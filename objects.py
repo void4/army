@@ -278,13 +278,20 @@ class Person:
 		attachBoxBody(self, x, y, (0,0,0), self.size, self.size)
 
 	def draw(self, screen):
-		pygame.draw.rect(screen, self.team, pygame.Rect(self.body.position.x, self.body.position.y, self.size, self.size))
-		pygame.draw.rect(screen, self.color, pygame.Rect(self.body.position.x, self.body.position.y, self.size, self.size//2))
+		x, y = self.body.position.x, self.body.position.y
+		pygame.draw.rect(screen, self.team, pygame.Rect(x, y, self.size, self.size))
+		pygame.draw.rect(screen, self.color, pygame.Rect(x, y, self.size, self.size//2))
 
 		hp = self.hp/100*self.size
-		pygame.draw.rect(screen, (255,0,0), pygame.Rect(self.body.position.x+hp, self.body.position.y - 2, self.size-hp, 1))
-		pygame.draw.rect(screen, (0,255,0), pygame.Rect(self.body.position.x, self.body.position.y - 2, hp, 1))
+		pygame.draw.rect(screen, (255,0,0), pygame.Rect(x+hp, y - 2, self.size-hp, 1))
+		pygame.draw.rect(screen, (0,255,0), pygame.Rect(x, y - 2, hp, 1))
 
+		if self.path:
+			line = [(x,y)] + [(px*GS, py*GS) for (px, py) in self.path]
+			for i in range(1, len(line)):
+				previous = line[i-1]
+				this = line[i]
+				pygame.draw.line(screen, (0,0,255), previous, this)
 
 	def settask(self, task):
 		self.cpu.pointer = 0
