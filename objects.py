@@ -242,7 +242,7 @@ class PassiveTaskObject(PassiveObject):
 			task = Task(task)
 		self.task = Task([]) if task is None else task
 
-task_tree = Task("gotome 'wood transform end".split())
+task_tree = "gotome 'wood transform end"
 color_tree = (100,250,50)
 size_tree = (3,30)
 

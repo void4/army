@@ -68,9 +68,9 @@ while running:
 			elif keymap[pygame.K_b]:
 				createObjectAt("box", mx, my)
 			elif keymap[pygame.K_t]:
-				world.append(Tree(mx, my))
+				createObjectAt("tree", mx, my)
 			elif keymap[pygame.K_w]:
-				world.append(Wood(mx, my))
+				createObjectAt("wood", mx, my)
 			elif keymap[pygame.K_c]:
 				world.append(Person(mx, my, None, task_worker, (255,255,0)))
 			else:
