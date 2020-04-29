@@ -118,8 +118,7 @@ while running:
 
 				if pos == sel_start:
 					for selection in selected:
-						selection.settask(f"{pos[0]} {pos[1]} 200 move".split())
-					print("moved")
+						selection.settask(f"{pos[0]} {pos[1]} 1000 move".split())
 
 				else:
 					sel_end = pos
