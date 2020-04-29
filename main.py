@@ -20,7 +20,7 @@ manager = pygame_gui.UIManager(SCREEN_WH)
 
 room_buttons = []
 
-for i in range(2, 5):
+for i in range(0, 5):
 	button = pygame_gui.elements.UIButton(
 		relative_rect=pygame.Rect((350+i*60, 275), (50, 50)),
 		text=f"{i}",
@@ -162,8 +162,12 @@ while running:
 		elif event.type == pygame.USEREVENT:
 			if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
 				if event.ui_element in room_buttons:
-					sel_type = "room"
-					sel_data = event.ui_element.roomtype
+					if sel_type == "room" and sel_data == event.ui_element.roomtype:
+						sel_type = None
+						sel_data = None
+					else:
+						sel_type = "room"
+						sel_data = event.ui_element.roomtype
 
 		manager.process_events(event)
 
