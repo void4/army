@@ -247,9 +247,15 @@ while running:
 						if sel_type == selname and sel_data == uie.data:
 							sel_type = None
 							sel_data = None
+							uie.unselect()
 						else:
 							sel_type = selname
 							sel_data = uie.data
+							uie.select()
+							for buttonlist2 in buttonmap.values():
+								for button2 in buttonlist2:
+									if button2 != uie and button2.is_selected:
+										button2.unselect()
 
 						break
 
