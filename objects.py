@@ -58,10 +58,12 @@ def updatePathgrid():
 
 updatePathgrid()
 
-R_BLOCKED, R_AIR, R_RED = range(3)
+R_BLOCKED, R_AIR, R_RED, R_GREEN, R_BLUE = range(5)
 
 tileimages = {
-	R_RED: "red.png"
+	R_RED: "red.png",
+	R_GREEN: "green.png",
+	R_BLUE: "blue.png",
 }
 
 class World:

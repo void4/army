@@ -1,3 +1,4 @@
 pygame
 pymunk
 pathfinding
+pygame_gui

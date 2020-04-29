@@ -3,13 +3,34 @@ from time import sleep
 from collections import defaultdict
 
 import pygame
+import pygame_gui
 
 from world import *
 
 pygame.init()
 pygame.display.set_caption("army")
 
-screen = pygame.display.set_mode((640,480))
+SCREEN_WIDTH = 640
+SCREEN_HEIGHT = 480
+SCREEN_WH = (SCREEN_WIDTH,SCREEN_HEIGHT)
+screen = pygame.display.set_mode(SCREEN_WH)
+
+manager = pygame_gui.UIManager(SCREEN_WH)
+#manager.set_visual_debug_mode(True)
+
+room_buttons = []
+
+for i in range(2, 5):
+	button = pygame_gui.elements.UIButton(
+		relative_rect=pygame.Rect((350+i*60, 275), (50, 50)),
+		text=f"{i}",
+		manager=manager
+	)
+	button.roomtype = i
+	room_buttons.append(button)
+
+
+clock = pygame.time.Clock()
 
 color = (210, 210, 200)#(255, 255, 255)
 
@@ -19,6 +40,8 @@ i = 0
 running = True
 
 sel_type = None
+sel_data = None
+
 sel_start = None
 sel_intermediate = None
 sel_end = None
@@ -28,6 +51,9 @@ selected = []
 keymap = defaultdict(lambda: 0)
 
 while running:
+
+	time_delta = clock.tick(60)/1000
+
 	screen.fill(color)
 
 	space.step(delta)
@@ -76,8 +102,11 @@ while running:
 			elif keymap[pygame.K_c]:
 				world.append(Person(mx, my, None, task_worker, (255,255,0)))
 			else:
-				if keymap[pygame.K_r]:
+				if sel_type is not None:
+					pass
+				elif keymap[pygame.K_r]:
 					sel_type = "room"
+					sel_data = 2
 				else:
 					sel_type = "select"
 				sel_start = pygame.mouse.get_pos()
@@ -116,7 +145,7 @@ while running:
 					elif sel_type == "room":
 						for y in range(y1//GS, y2//GS):
 							for x in range(x1//GS, x2//GS):
-								worldgrid[y][x] = 2 if worldgrid[y][x] == 1 else 1
+								worldgrid[y][x] = sel_data if event.button == 1 else 1#2 if worldgrid[y][x] == 1 else 1
 								updatePathgrid()
 					else:
 						print("Unknown sel_type:", sel_type)
@@ -128,6 +157,18 @@ while running:
 		elif event.type == pygame.QUIT:
 			running = False
 
+
+
+		elif event.type == pygame.USEREVENT:
+			if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
+				if event.ui_element in room_buttons:
+					sel_type = "room"
+					sel_data = event.ui_element.roomtype
+
+		manager.process_events(event)
+
+	manager.update(time_delta)
+
 	# how come deleted objects are not selected anymore?
 	if len(selected) > 0:
 		p = selected[0]
@@ -135,5 +176,5 @@ while running:
 			#print(need["Name"], need["Value"])
 			pass
 
+	manager.draw_ui(screen)
 	pygame.display.flip()
-	sleep(delta)
