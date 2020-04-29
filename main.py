@@ -38,7 +38,7 @@ for i in range(0, 5):
 		container=roommenu,
 		manager=manager
 	)
-	button.roomtype = i
+	button.data = i
 	room_buttons.append(button)
 
 button_staffmenu = pygame_gui.elements.UIButton(
@@ -61,7 +61,7 @@ for staff in [task_worker]:
 		container=staffmenu,
 		manager=manager
 	)
-	button.stafftype = staff
+	button.data = staff
 	staff_buttons.append(button)
 
 button_objectmenu = pygame_gui.elements.UIButton(
@@ -85,7 +85,7 @@ for i, objectname in enumerate(buildable_objects):
 		container=objectmenu,
 		manager=manager
 	)
-	button.objecttype = objectname
+	button.data = objectname
 	object_buttons.append(button)
 
 clock = pygame.time.Clock()
@@ -234,59 +234,50 @@ while running:
 		elif event.type == pygame.USEREVENT:
 			if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
 				uie = event.ui_element
-				if uie in room_buttons:
-					if sel_type == "room" and sel_data == uie.roomtype:
-						sel_type = None
-						sel_data = None
-					else:
-						sel_type = "room"
-						sel_data = uie.roomtype
 
-				elif uie in staff_buttons:
-					if sel_type == "hire" and sel_data == uie.stafftype:
-						sel_type = None
-						sel_data = None
-					else:
-						sel_type = "hire"
-						sel_data = uie.stafftype
+				buttonmap = {
+					"room": room_buttons,
+					"hire": staff_buttons,
+					"place": object_buttons,
+				}
 
-				elif uie in object_buttons:
-					if sel_type == "place" and sel_data == uie.objecttype:
-						sel_type = None
-						sel_data = None
-					else:
-						sel_type = "place"
-						sel_data = uie.objecttype
+				for selname, buttonlist in buttonmap.items():
+					if uie in buttonlist:
 
-				elif uie == button_roommenu:
-					menupos = roommenu.get_relative_rect()
-					if menupos.y > -30:
-						roommenu.set_position(Vec2d(0, -5000))
-						sel_type = None
-						sel_data = None
-					else:
-						# TODO: old position
-						roommenu.set_position(Vec2d(50, 300))
+						if sel_type == selname and sel_data == uie.data:
+							sel_type = None
+							sel_data = None
+						else:
+							sel_type = selname
+							sel_data = uie.data
 
-				elif uie == button_staffmenu:
-					menupos = staffmenu.get_relative_rect()
-					if menupos.y > -30:
-						staffmenu.set_position(Vec2d(0, -5000))
-						sel_type = None
-						sel_data = None
-					else:
-						# TODO: old position
-						staffmenu.set_position(Vec2d(50, 300))
+						break
 
-				elif uie == button_objectmenu:
-					menupos = objectmenu.get_relative_rect()
-					if menupos.y > -30:
-						objectmenu.set_position(Vec2d(0, -5000))
-						sel_type = None
-						sel_data = None
-					else:
-						# TODO: old position
-						objectmenu.set_position(Vec2d(50, 300))
+
+				#for:else:
+
+				menumap = {
+					button_roommenu: roommenu,
+					button_staffmenu: staffmenu,
+					button_objectmenu: objectmenu,
+				}
+
+				for menubutton, menu in menumap.items():
+					if uie == menubutton:
+						menupos = menu.get_relative_rect()
+						if menupos.y > -30:
+							menu.set_position(Vec2d(0, -5000))
+							sel_type = None
+							sel_data = None
+						else:
+							# TODO: old position
+							menu.set_position(Vec2d(50, 300))
+
+						# TODO hide all others?
+						for menu2 in menumap.values():
+							if menu2 != menu:
+								menu2.set_position(Vec2d(0, -5000))
+						break
 
 		manager.process_events(event)
 
