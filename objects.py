@@ -92,7 +92,7 @@ def gel(a,b):
 def dist(x1,y1,x2,y2):
 	return ((x1-x2)**2+(y1-y2)**2)**0.5
 
-A_MOVE, A_RECRUIT, A_FOLLOW, A_COLOR, A_IDLE, A_SHOOT, A_MOVETOOBJECT, A_MOVETOPOSITION = range(8)
+A_MOVE, A_RECRUIT, A_FOLLOW, A_COLOR, A_IDLE, A_SHOOT, A_MOVETOOBJECT, A_MOVETOPOSITION, A_FOLLOWME = range(9)
 
 def is_number(s):
 	try:
@@ -141,6 +141,8 @@ class Interpreter:
 			ret = (A_COLOR, pop())
 		elif cmd == "idle":
 			ret = (A_IDLE, popNone())
+		elif cmd == "followme":
+			ret = (A_FOLLOWME, None)
 		else:
 			raise Exception("UNKNWOWN", cmd)
 
@@ -274,21 +276,6 @@ class PassiveTaskObject(PassiveObject):
 			task = Task(task)
 		self.task = Task([]) if task is None else task
 
-task_tree = "gotome 'wood transform end"
-color_tree = (100,250,50)
-size_tree = (3,30)
-
-task_wood = "gotome pickmeup 60 400 200 carryme dropme 'chair transform end"
-color_wood = (100, 50, 50)
-size_wood = (5,5)
-
-task_box = "gotome pickmeup 60 200 200 carryme dropme end"
-color_box = (200,150,100)
-size_box = (15, 15)
-
-color_chair = (20,20,200)
-size_chair = (10, 10)
-
 def createObjectAt(name, x, y):
 	g = globals()
 
@@ -347,7 +334,7 @@ class Person:
 				this = line[i]
 				pygame.draw.line(screen, (0,0,255), previous, this)
 
-	def settask(self, task):
+	def setTask(self, task):
 		self.cpu.pointer = 0
 		self.cpu.task = task
 		self.activity = None
@@ -391,27 +378,29 @@ class Person:
 
 			# TODO object positition might change? /destroyed
 
-			tx, ty = self.path[0]
-			tx *= GS
-			ty *= GS
+			if self.path is not None:
 
-			if dist(x,y,tx,ty) < 3:
-				self.path.pop(0)
+				tx, ty = self.path[0]
+				tx *= GS
+				ty *= GS
 
-			if len(self.path) == 0 or self.atime > td:
+				if dist(x,y,tx,ty) < 3:
+					self.path.pop(0)
 
-				if self.activity in [A_MOVETOOBJECT, A_MOVETOPOSITION]:
-					self.work.task.step += 1
+				if len(self.path) == 0 or self.atime > td:
 
-				self.adata = None
-				self.path = None
-				self.activity = A_IDLE
-				self.atime = 0
+					if self.activity in [A_MOVETOOBJECT, A_MOVETOPOSITION]:
+						self.work.task.step += 1
 
-			else:
-				dx, dy = gel(tx, x), gel(ty, y)
-				self.body.position = Vec2d(x+dx,y+dy)
-				self.atime += 1
+					self.adata = None
+					self.path = None
+					self.activity = A_IDLE
+					self.atime = 0
+
+				else:
+					dx, dy = gel(tx, x), gel(ty, y)
+					self.body.position = Vec2d(x+dx,y+dy)
+					self.atime += 1
 
 
 
@@ -495,6 +484,15 @@ class Person:
 					self.work = None
 				else:
 					print("unknown cmd:", cmd)
+
+		elif self.activity == A_FOLLOWME:
+			world.append(Shout(self.body.position.x, self.body.position.y))
+			subjects = [o for o in world if isinstance(o, Person) and o.superior == self]
+			print(subjects)
+			for subject in subjects:
+				subject.setTask("10 10000 follow".split())
+			step = True
+
 		else:
 			step = True
 
@@ -504,6 +502,17 @@ class Person:
 		if step:
 			self.activity, self.adata = self.cpu.step()
 
+		"""
+		if random() < 0.01:
+			targets = [o for o in world if isinstance(o, Person) and o.team != self.team]
+			if targets:
+				target = choice(targets)
+				x,y = self.body.position.x, self.body.position.y
+				if random() < 0.9:
+					world.append(Bullet(x, y, target.body.position.x, target.body.position.y))
+				else:
+					world.append(Grenade(x, y, target.body.position.x, target.body.position.y))
+		"""
 
 
 		if self.hp <= 0:
@@ -513,7 +522,7 @@ class Person:
 		global world
 		x, y = self.body.position.x, self.body.position.y
 		for i in range(self.adata[0]):
-			world.append(Person(x-16*i, y-10*i, superior=self, task=eval("task_"+self.adata[1]), team=self.team))
+			world.append(Person(x-16*i, y-10*(i+1), superior=self, task=eval("task_"+self.adata[1]), team=self.team))
 
 	def shout(msg):
 		x, y = self.body.position.x, self.body.position.y

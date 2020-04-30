@@ -174,7 +174,7 @@ while running:
 					else:
 						sel_type = "select"
 					sel_start = pygame.mouse.get_pos()
-					
+
 		elif event.type == pygame.MOUSEBUTTONUP:
 
 			if sel_start:
@@ -184,7 +184,7 @@ while running:
 				if pos == sel_start:
 					if sel_type == "select":
 						for selection in selected:
-							selection.settask(f"{pos[0]} {pos[1]} 1000 move".split())
+							selection.setTask(f"{pos[0]} {pos[1]} 1000 move".split())
 					elif sel_type == "hire":
 						world.append(Person(pos[0], pos[1], None, sel_data, (255,255,0)))
 					elif sel_type == "place":
@@ -295,6 +295,8 @@ while running:
 		manager.process_events(event)
 
 	manager.update(time_delta)
+
+	#print(len(world))
 
 	# how come deleted objects are not selected anymore?
 	if len(selected) > 0:
