@@ -8,6 +8,8 @@ from pymunk import Space, Body, Poly, Vec2d, ShapeFilter
 from parsetxt import parse
 from tasks import *
 
+pygame.init()
+
 cats = parse("Needs.txt")
 
 space = Space()
@@ -66,6 +68,12 @@ tileimages = {
 	R_BLUE: "blue.png",
 }
 
+font = pygame.font.Font("Roboto/Roboto-Black.ttf", 20)
+
+def text(screen, s, x, y, color=(0,0,0), font=font):
+	text_surface = font.render(s, True, (0, 0, 0))
+	screen.blit(text_surface, dest=(x,y))
+
 class World:
 	def update(self):
 		return False
@@ -77,6 +85,9 @@ class World:
 					pygame.draw.rect(screen, (10,10,10), pygame.Rect(x*GS,y*GS,GS,GS))
 				elif worldgrid[y][x] > 1:
 					screen.blit(imagecache["images/"+tileimages[worldgrid[y][x]]], (x*GS, y*GS))
+
+		text(screen, str(len(world)), 0, 0)
+
 
 
 world.append(World())
@@ -276,16 +287,17 @@ class PassiveTaskObject(PassiveObject):
 			task = Task(task)
 		self.task = Task([]) if task is None else task
 
-def createObjectAt(name, x, y):
+def createObjectAt(name, x, y, task=None):
 	g = globals()
 
 	scolor = g["color_"+name]
 	ssize = g["size_"+name]
 	simg = "images/"+name+".png"
 
-
-	stask = "task_"+name
-	if stask in g:
+	if task is not None:
+		obj = PassiveTaskObject(x, y, *ssize, simg, scolor, task)
+	elif stask in g:
+		stask = "task_"+name
 		obj = PassiveTaskObject(x, y, *ssize, simg, scolor, g[stask])
 	else:
 		obj = PassiveObject(x, y, *ssize, simg, scolor)
@@ -355,6 +367,7 @@ class Person:
 
 			if self.activity in [A_MOVE, A_MOVETOPOSITION]:
 				tx, ty, td = self.adata[0], self.adata[1], self.adata[2]
+				#print("TXTYTD", tx,ty,td)
 			else:
 				tx, ty = self.work.body.position.x, self.work.body.position.y
 				td = self.adata
@@ -463,7 +476,7 @@ class Person:
 					task.step += 1
 				elif cmd == "carryme":
 					self.activity = A_MOVETOPOSITION
-					self.adata = [task.stack.pop(-3), task.stack.pop(-2), task.stack.pop(-1)]
+					self.adata = [task.stack.pop(-1), task.stack.pop(-1), task.stack.pop(-1)]
 				elif cmd == "dropme":
 					self.inventory.remove(self.work)
 					task.step += 1
@@ -474,6 +487,21 @@ class Person:
 
 					createObjectAt(name, x, y)
 
+					task.step += 1
+					self.work.kill = True
+				elif cmd == "build":
+					what = task.stack.pop(-1)
+					y = task.stack.pop(-1)
+					x = task.stack.pop(-1)
+
+					if what == "none":
+						pass
+					elif what == "wall":
+						print(x,y)
+						worldgrid[int(y//GS)][int(x//GS)] = 0
+						updatePathgrid()
+					else:
+						print("unknown build: ", what)
 					task.step += 1
 					self.work.kill = True
 				elif cmd == "end":

@@ -10,6 +10,9 @@ task_box = "gotome pickmeup 60 200 200 carryme dropme end"
 color_box = (200,150,100)
 size_box = (15, 15)
 
+color_concrete = (50, 50, 50)
+size_concrete = (10,10)
+
 color_chair = (20,20,200)
 size_chair = (10, 10)
 

@@ -18,6 +18,31 @@ screen = pygame.display.set_mode(SCREEN_WH)
 manager = pygame_gui.UIManager(SCREEN_WH)
 #manager.set_visual_debug_mode(True)
 
+
+button_buildmenu = pygame_gui.elements.UIButton(
+	relative_rect=pygame.Rect((0, 400), (50, 50)),
+	text="Build",
+	manager=manager
+)
+
+buildmenu = pygame_gui.elements.UIWindow(
+	rect=pygame.Rect((0, -5000), (400, 50)),
+	manager=manager
+)
+
+build_buttons = []
+
+
+button = pygame_gui.elements.UIButton(
+	relative_rect=pygame.Rect((i*60, 0), (50, 50)),
+	text="room",
+	container=buildmenu,
+	manager=manager
+)
+button.data = "room"
+build_buttons.append(button)
+
+
 button_roommenu = pygame_gui.elements.UIButton(
 	relative_rect=pygame.Rect((50, 400), (50, 50)),
 	text="Rooms",
@@ -151,7 +176,7 @@ while running:
 			mx, my = pygame.mouse.get_pos()
 
 			# Is there already a builtin function for this?
-			for window in [roommenu, staffmenu, objectmenu]:
+			for window in [buildmenu, roommenu, staffmenu, objectmenu]:
 				if window.check_clicked_inside_or_blocking(event):
 					break
 			else:
@@ -222,6 +247,22 @@ while running:
 								worldgrid[y][x] = sel_data if event.button == 1 else 1#2 if worldgrid[y][x] == 1 else 1
 								updatePathgrid()
 
+					elif sel_type == "build":
+						print("BUILD")
+						min_y = y1//GS
+						max_y = y2//GS
+						min_x = x1//GS
+						max_x = x2//GS
+						for y in range(min_y, max_y):
+							for x in range(min_x, max_x):
+								if y in [min_y, max_y-1] or x in [min_x, max_x-1]:
+									action = "wall"
+								else:
+									action = "none"
+								#worldgrid[y][x] = sel_data if event.button == 1 else 1#2 if worldgrid[y][x] == 1 else 1
+								print("here")
+								createObjectAt("concrete", 200, 200, f"gotome pickmeup 60 {y*GS} {x*GS} carryme dropme {x*GS} {y*GS} '{action} build end")
+
 					elif sel_type == "hire":
 						sel_type = None
 						sel_data = None
@@ -243,6 +284,7 @@ while running:
 				uie = event.ui_element
 
 				buttonmap = {
+					"build": build_buttons,
 					"room": room_buttons,
 					"hire": staff_buttons,
 					"place": object_buttons,
@@ -270,6 +312,7 @@ while running:
 				#for:else:
 
 				menumap = {
+					button_buildmenu: buildmenu,
 					button_roommenu: roommenu,
 					button_staffmenu: staffmenu,
 					button_objectmenu: objectmenu,
